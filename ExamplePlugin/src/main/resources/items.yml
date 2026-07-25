@@ -1,0 +1,27 @@
+# Sample items for testing YamlItem parsing.
+# Usage: /itemapi <key>
+
+cool_sword:
+  material: diamond_sword
+  name: "<red><bold>Cool Sword"
+  lore:
+    - "<gray>An example YamlItem"
+    - "<dark_gray>Parsed by ItemAPI"
+  enchantments:
+    sharpness: 5
+    unbreaking: 3
+  unbreakable: true
+
+glowing_apple:
+  material: golden_apple
+  amount: 8
+  name: "<gold>Glowing Apple"
+  lore:
+    - "<yellow>Tasty and shiny"
+  glint: true
+
+custom_head:
+  material: player_head
+  name: "<aqua>Example Head"
+  components:
+    profile: UsainSrht

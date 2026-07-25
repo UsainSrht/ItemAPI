@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>me.usainsrht.itemapi</groupId>
+        <artifactId>itemapi</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>exampleplugin</artifactId>
+    <name>ItemAPIExamplePlugin</name>
+    <description>Example Paper plugin for testing ItemAPI features</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>me.usainsrht.itemapi</groupId>
+            <artifactId>itemtext</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>me.usainsrht.itemapi</groupId>
+            <artifactId>yamlitem</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <finalName>ItemAPIExamplePlugin</finalName>
+                            <artifactSet>
+                                <includes>
+                                    <include>me.usainsrht.itemapi:itemtext</include>
+                                    <include>me.usainsrht.itemapi:yamlitem</include>
+                                </includes>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
