@@ -17,7 +17,6 @@ final class ItemSpriteOverrides {
     private static final Key ITEMS_ATLAS = Key.key("minecraft", "items");
     private static final Key BLOCKS_ATLAS = SpriteObjectContents.DEFAULT_ATLAS;
     private static final Key MAP_DECORATIONS_ATLAS = Key.key("minecraft", "map_decorations");
-    private static final Key SHIELD_PATTERNS_ATLAS = Key.key("minecraft", "shield_patterns");
     private static final Key DECORATED_POT_ATLAS = Key.key("minecraft", "decorated_pot");
 
     private static final Map<String, SpriteRef> BY_ITEM = build();
@@ -84,8 +83,10 @@ final class ItemSpriteOverrides {
         putBlock(map, "piglin_head", "orange_terracotta");
         // player_head uses ObjectContents.playerHead when a profile is present
 
+        // Shield pattern atlas base is blank in text; use a recognizable wood face
+        putBlock(map, "shield", "oak_planks");
+
         // Other entity / multi-texture holdables
-        put(map, "shield", SHIELD_PATTERNS_ATLAS, "entity/shield/base");
         put(map, "decorated_pot", DECORATED_POT_ATLAS, "entity/decorated_pot/decorated_pot_side");
         putBlock(map, "vault", "vault_front_off");
         putBlock(map, "trial_spawner", "trial_spawner_side_inactive");

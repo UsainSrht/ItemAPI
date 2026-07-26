@@ -43,7 +43,6 @@ final class BlockSpriteLookup {
             Map.entry("petrified_oak_slab", "oak_planks"),
             Map.entry("light_weighted_pressure_plate", "gold_block"),
             Map.entry("heavy_weighted_pressure_plate", "iron_block"),
-            Map.entry("glass_pane", "glass"),
             Map.entry("suspicious_sand", "suspicious_sand_0"),
             Map.entry("suspicious_gravel", "suspicious_gravel_0"),
             Map.entry("test_block", "test_block_accept")
@@ -55,6 +54,12 @@ final class BlockSpriteLookup {
     static String resolve(String itemName) {
         if (BlockAtlasSprites.contains(itemName)) {
             return itemName;
+        }
+
+        // Prefer full glass faces over pane edge textures (*_pane_top stripe)
+        String glass = glassBlockSprite(itemName);
+        if (glass != null) {
+            return glass;
         }
 
         String special = SPECIALS.get(itemName);
@@ -97,6 +102,19 @@ final class BlockSpriteLookup {
         return null;
     }
 
+    private static @Nullable String glassBlockSprite(String name) {
+        if ("glass_pane".equals(name)) {
+            return "glass";
+        }
+        if (name.endsWith("_stained_glass_pane")) {
+            String glass = name.substring(0, name.length() - "_pane".length());
+            if (BlockAtlasSprites.contains(glass)) {
+                return glass;
+            }
+        }
+        return null;
+    }
+
     private static @Nullable String derive(String name) {
         // infested_stone_bricks → stone_bricks
         if (name.startsWith("infested_")) {
@@ -115,11 +133,6 @@ final class BlockSpriteLookup {
         // colored carpets → wool
         if (name.endsWith("_carpet") && !name.equals("pale_moss_carpet")) {
             return name.substring(0, name.length() - "_carpet".length()) + "_wool";
-        }
-
-        // stained glass panes → stained glass
-        if (name.endsWith("_stained_glass_pane")) {
-            return name.substring(0, name.length() - "_pane".length());
         }
 
         if (name.endsWith("_fence_gate")) {

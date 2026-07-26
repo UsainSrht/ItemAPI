@@ -9,14 +9,12 @@ import net.kyori.adventure.text.object.SpriteObjectContents;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ItemType;
-import org.jspecify.annotations.Nullable;
-
-import java.util.UUID;
 
 final class ItemSpriteFactory {
 
     private static final Key ITEMS_ATLAS = Key.key("minecraft", "items");
     private static final Key BLOCKS_ATLAS = SpriteObjectContents.DEFAULT_ATLAS;
+    private static final Key STEVE_SKIN = Key.key("minecraft", "entity/player/wide/steve");
 
     private ItemSpriteFactory() {
     }
@@ -24,30 +22,24 @@ final class ItemSpriteFactory {
     static Component create(ItemStack item) {
         Material material = item.getType();
         if (material == Material.PLAYER_HEAD || material == Material.PLAYER_WALL_HEAD) {
-            Component head = playerHead(item);
-            if (head != null) {
-                return head;
-            }
+            return playerHead(item);
         }
 
         ItemSpriteOverrides.SpriteRef sprite = resolve(item);
         return Component.object(ObjectContents.sprite(sprite.atlas(), sprite.sprite()));
     }
 
-    private static @Nullable Component playerHead(ItemStack item) {
+    /**
+     * Player heads use Adventure's player-head object (not an atlas sprite).
+     * With a profile this shows that skin; without one it falls back to Steve.
+     */
+    private static Component playerHead(ItemStack item) {
         ResolvableProfile profile = item.getData(DataComponentTypes.PROFILE);
-        if (profile == null) {
-            return null;
+        if (profile != null) {
+            // ResolvableProfile is a SkinSource — preserves uuid/name/properties
+            return Component.object(ObjectContents.playerHead(profile));
         }
-        UUID uuid = profile.uuid();
-        if (uuid != null) {
-            return Component.object(ObjectContents.playerHead(uuid));
-        }
-        String name = profile.name();
-        if (name != null && !name.isEmpty()) {
-            return Component.object(ObjectContents.playerHead(name));
-        }
-        return null;
+        return Component.object(ObjectContents.playerHead().texture(STEVE_SKIN).build());
     }
 
     private static ItemSpriteOverrides.SpriteRef resolve(ItemStack item) {
