@@ -54,6 +54,8 @@ public final class ItemTextOptions {
 
     private final String pattern;
 
+    private final boolean displayRarityColor;
+
     private final boolean shadowEnabled;
 
     private final ShadowColor shadowColor;
@@ -75,6 +77,8 @@ public final class ItemTextOptions {
         this.amountDisplay = builder.amountDisplay;
 
         this.showAmountWhenOne = builder.showAmountWhenOne;
+
+        this.displayRarityColor = builder.displayRarityColor;
 
         this.pattern = builder.pattern;
 
@@ -146,6 +150,14 @@ public final class ItemTextOptions {
 
 
 
+    public boolean displayRarityColor() {
+
+        return displayRarityColor;
+
+    }
+
+
+
     public String pattern() {
 
         return pattern;
@@ -206,6 +218,8 @@ public final class ItemTextOptions {
 
                 .showAmountWhenOne(showAmountWhenOne)
 
+                .displayRarityColor(displayRarityColor)
+
                 .pattern(pattern)
 
                 .shadowEnabled(shadowEnabled)
@@ -231,6 +245,8 @@ public final class ItemTextOptions {
         private AmountDisplay amountDisplay = AmountDisplay.SUBSCRIPT;
 
         private boolean showAmountWhenOne = false;
+
+        private boolean displayRarityColor = false;
 
         private String pattern = DEFAULT_PATTERN;
 
@@ -287,6 +303,16 @@ public final class ItemTextOptions {
         public Builder showAmountWhenOne(boolean showAmountWhenOne) {
 
             this.showAmountWhenOne = showAmountWhenOne;
+
+            return this;
+
+        }
+
+
+
+        public Builder displayRarityColor(boolean displayRarityColor) {
+
+            this.displayRarityColor = displayRarityColor;
 
             return this;
 

@@ -150,6 +150,10 @@ public final class YamlItemParser {
             applyValued(stack, DataComponentTypes.REPAIR_COST, node.raw("repair_cost"), node.childPath("repair_cost"));
             applied.add("repair_cost");
         }
+        if (node.contains("hide_tooltip")) {
+            applyHideTooltip(stack, node.raw("hide_tooltip"), node.childPath("hide_tooltip"));
+            applied.add("hide_tooltip");
+        }
 
         // Any other root key that matches a component id (except meta keys) is treated as a shortcut
         for (String key : node.keys()) {
@@ -173,6 +177,22 @@ public final class YamlItemParser {
         for (String key : components.keys()) {
             boolean unsetPrefix = key.startsWith("!");
             String componentId = unsetPrefix ? key.substring(1) : key;
+            if (componentId.equals("hide_tooltip")) {
+                if (applied.contains("hide_tooltip")) {
+                    continue; // root shortcut wins
+                }
+                if (unsetPrefix) {
+                    boolean shouldUnset = components.raw(key) == null || ValueUtil.asBoolean(components.raw(key), components.childPath(key));
+                    if (shouldUnset) {
+                        applyHideTooltip(stack, false, components.childPath(key));
+                        applied.add("hide_tooltip");
+                    }
+                    continue;
+                }
+                applyHideTooltip(stack, components.raw(key), components.childPath(key));
+                applied.add("hide_tooltip");
+                continue;
+            }
             DataComponentType type = handlers.requireType(componentId, components.childPath(key));
             String id = type.getKey().getKey();
             if (applied.contains(id)) {
@@ -199,6 +219,17 @@ public final class YamlItemParser {
         } else {
             stack.unsetData(type);
         }
+    }
+
+    private void applyHideTooltip(ItemStack stack, Object value, String path) {
+        boolean hide = value == null || ValueUtil.asBoolean(value, path);
+        io.papermc.paper.datacomponent.item.TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
+        io.papermc.paper.datacomponent.item.TooltipDisplay.Builder builder = io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
+                .hideTooltip(hide);
+        if (existing != null) {
+            builder.hiddenComponents(existing.hiddenComponents());
+        }
+        stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
     }
 
     private void applyValued(ItemStack stack, DataComponentType type, Object value, String path) {

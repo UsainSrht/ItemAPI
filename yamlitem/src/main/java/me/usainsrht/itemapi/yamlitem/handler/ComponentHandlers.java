@@ -628,14 +628,18 @@ public final class ComponentHandlers {
 
     private static void tooltipDisplay(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
         YamlNode node = HandlerSupport.asNode(value, path);
+        TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
+        boolean defaultHideTooltip = existing != null && existing.hideTooltip();
         TooltipDisplay.Builder builder = TooltipDisplay.tooltipDisplay()
-                .hideTooltip(ValueUtil.boolOr(node, "hide_tooltip", false));
+                .hideTooltip(ValueUtil.boolOr(node, "hide_tooltip", defaultHideTooltip));
         if (node.contains("hidden_components")) {
             Set<DataComponentType> hidden = new HashSet<>();
             for (Object element : node.list("hidden_components")) {
                 hidden.add(parser.handlers().requireType(String.valueOf(element), node.childPath("hidden_components")));
             }
             builder.hiddenComponents(hidden);
+        } else if (existing != null) {
+            builder.hiddenComponents(existing.hiddenComponents());
         }
         HandlerSupport.set(stack, type, builder.build());
     }
