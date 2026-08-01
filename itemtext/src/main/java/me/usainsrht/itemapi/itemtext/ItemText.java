@@ -115,12 +115,13 @@ public final class ItemText {
         bundle.setData(DataComponentTypes.BUNDLE_CONTENTS,
                 BundleContents.bundleContents().addAll(contents).build());
 
-        // If the original had no explicit name, stamp an ITEM_NAME with the original's
+        // If the original had no explicit user-set name, stamp an ITEM_NAME with the original's
         // translation key so the hover tooltip doesn't just read "Bundle".
-        if (item.getData(DataComponentTypes.CUSTOM_NAME) == null
-                && item.getData(DataComponentTypes.ITEM_NAME) == null) {
-            bundle.setData(DataComponentTypes.ITEM_NAME,
-                    Component.translatable(item.getType().translationKey()));
+        boolean hasCustomName = item.hasItemMeta() && (item.getItemMeta().hasDisplayName() || item.getItemMeta().hasItemName());
+        if (!hasCustomName) {
+            Component translateComp = Component.translatable(item.getType().translationKey());
+            bundle.setData(DataComponentTypes.ITEM_NAME, translateComp);
+            bundle.editMeta(meta -> meta.itemName(translateComp));
         }
 
         return bundle;
