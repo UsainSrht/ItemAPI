@@ -1,6 +1,8 @@
 package me.usainsrht.itemapi.itemtext;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.BundleContents;
+import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.ShadowColor;
@@ -10,9 +12,11 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.ArgumentQueue;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 
@@ -71,9 +75,55 @@ public final class ItemText {
                     .build();
         }
         if (options.hoverEnabled()) {
-            result = result.hoverEvent(item);
+            // When containerShowAsBundle is on and the item has a container component,
+            // the hover shows a virtual bundle (all original data preserved, contents
+            // shown as bundle contents) instead of the raw container item.
+            ItemStack hoverItem = options.containerShowAsBundle()
+                    ? bundleRepresentationOrSelf(item)
+                    : item;
+            result = result.hoverEvent(hoverItem);
         }
         return result;
+    }
+
+    /**
+     * Returns {@code item} itself when it has no {@link DataComponentTypes#CONTAINER} component,
+     * otherwise returns a virtual {@link Material#BUNDLE} that:
+     * <ul>
+     *   <li>carries all data components of the original item (via {@link ItemStack#withType})</li>
+     *   <li>has {@code BUNDLE_CONTENTS} populated from the container's non-empty items</li>
+     *   <li>has the {@code CONTAINER} component removed (bundles don't carry it)</li>
+     *   <li>has {@code ITEM_NAME} set to the original item's translation key when the original
+     *       has neither a {@code CUSTOM_NAME} nor an {@code ITEM_NAME} override, so the hover
+     *       tooltip reads e.g. "Shulker Box" instead of "Bundle"</li>
+     * </ul>
+     */
+    private static ItemStack bundleRepresentationOrSelf(ItemStack item) {
+        ItemContainerContents container = item.getData(DataComponentTypes.CONTAINER);
+        if (container == null) {
+            return item;
+        }
+
+        // withType copies all data components from the original item onto a new BUNDLE stack.
+        ItemStack bundle = item.withType(Material.BUNDLE);
+
+        // Swap CONTAINER → BUNDLE_CONTENTS.
+        List<ItemStack> contents = container.contents().stream()
+                .filter(c -> c != null && !c.getType().isAir() && c.getAmount() > 0)
+                .toList();
+        bundle.unsetData(DataComponentTypes.CONTAINER);
+        bundle.setData(DataComponentTypes.BUNDLE_CONTENTS,
+                BundleContents.bundleContents().addAll(contents).build());
+
+        // If the original had no explicit name, stamp an ITEM_NAME with the original's
+        // translation key so the hover tooltip doesn't just read "Bundle".
+        if (item.getData(DataComponentTypes.CUSTOM_NAME) == null
+                && item.getData(DataComponentTypes.ITEM_NAME) == null) {
+            bundle.setData(DataComponentTypes.ITEM_NAME,
+                    Component.translatable(item.getType().translationKey()));
+        }
+
+        return bundle;
     }
 
     private static Component sprite(ItemStack item, ItemTextOptions options) {

@@ -64,6 +64,8 @@ public final class ItemTextOptions {
 
     private final boolean hoverEnabled;
 
+    private final boolean containerShowAsBundle;
+
 
 
     private ItemTextOptions(Builder builder) {
@@ -89,6 +91,8 @@ public final class ItemTextOptions {
         this.spriteColor = builder.spriteColor;
 
         this.hoverEnabled = builder.hoverEnabled;
+
+        this.containerShowAsBundle = builder.containerShowAsBundle;
 
     }
 
@@ -204,6 +208,28 @@ public final class ItemTextOptions {
 
 
 
+    /**
+
+     * When {@code true} (the default), items that carry a {@code container} data component
+
+     * (e.g. shulker boxes, chests-as-items with NBT) are displayed with a bundle sprite whose
+
+     * contents mirror the container tag.  All other item data and the display name are kept from
+
+     * the original item; if the original has no custom name or item-name override the sprite uses
+
+     * the original item's own translation key rather than the bundle's.
+
+     */
+
+    public boolean containerShowAsBundle() {
+
+        return containerShowAsBundle;
+
+    }
+
+
+
     public Builder toBuilder() {
 
         return new Builder()
@@ -228,7 +254,9 @@ public final class ItemTextOptions {
 
                 .spriteColor(spriteColor)
 
-                .hoverEnabled(hoverEnabled);
+                .hoverEnabled(hoverEnabled)
+
+                .containerShowAsBundle(containerShowAsBundle);
 
     }
 
@@ -257,6 +285,8 @@ public final class ItemTextOptions {
         private @Nullable TextColor spriteColor = NamedTextColor.WHITE;
 
         private boolean hoverEnabled = true;
+
+        private boolean containerShowAsBundle = true;
 
 
 
@@ -369,6 +399,16 @@ public final class ItemTextOptions {
         public Builder hoverEnabled(boolean hoverEnabled) {
 
             this.hoverEnabled = hoverEnabled;
+
+            return this;
+
+        }
+
+
+
+        public Builder containerShowAsBundle(boolean containerShowAsBundle) {
+
+            this.containerShowAsBundle = containerShowAsBundle;
 
             return this;
 

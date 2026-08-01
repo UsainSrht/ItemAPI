@@ -32,6 +32,7 @@ import org.bukkit.inventory.ItemStack;
  *   <li>{@code sprite_color:<color>} — named, hex, or {@code none}</li>
  *   <li>{@code sprite_none} / {@code no_sprite_color}</li>
  *   <li>{@code hover} / {@code no_hover}</li>
+ *   <li>{@code bundle} / {@code no_bundle}: show container items as a bundle sprite (default: on)</li>
  * </ul>
  */
 public final class ItemExpansionProvider implements ExpansionProvider {
@@ -80,6 +81,8 @@ public final class ItemExpansionProvider implements ExpansionProvider {
                 case "no_shadow" -> builder.shadowEnabled(false);
                 case "hover" -> builder.hoverEnabled(true);
                 case "no_hover" -> builder.hoverEnabled(false);
+                case "bundle" -> builder.containerShowAsBundle(true);
+                case "no_bundle" -> builder.containerShowAsBundle(false);
                 case "sprite_none", "no_sprite_color" -> builder.spriteColor(null);
                 case "shadow_color" -> {
                     if (queue.hasNext()) {
