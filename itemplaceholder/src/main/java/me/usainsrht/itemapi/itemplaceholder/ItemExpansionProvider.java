@@ -26,6 +26,7 @@ import org.bukkit.inventory.ItemStack;
  *   <li>{@code custom_name} / {@code no_custom_name} ({@code translate})</li>
  *   <li>{@code italic} / {@code no_italic}</li>
  *   <li>{@code superscript} / {@code subscript} / {@code normal_amount}</li>
+ *   <li>{@code amount:<int>} — override displayed amount (any int; negative/zero allowed)</li>
  *   <li>{@code show_one}</li>
  *   <li>{@code shadow} / {@code no_shadow}</li>
  *   <li>{@code shadow_color:<color>} — named, {@code #RRGGBB}, {@code #RRGGBBAA}, {@code default}, {@code none}</li>
@@ -76,6 +77,15 @@ public final class ItemExpansionProvider implements ExpansionProvider {
                 case "superscript", "super" -> builder.amountDisplay(AmountDisplay.SUPERSCRIPT);
                 case "subscript", "sub" -> builder.amountDisplay(AmountDisplay.SUBSCRIPT);
                 case "normal_amount", "normal" -> builder.amountDisplay(AmountDisplay.NORMAL);
+                case "amount" -> {
+                    if (queue.hasNext()) {
+                        try {
+                            builder.amount(Integer.parseInt(queue.pop().value()));
+                        } catch (NumberFormatException ignored) {
+                            // skip invalid amount
+                        }
+                    }
+                }
                 case "show_one", "force_amount" -> builder.showAmountWhenOne(true);
                 case "shadow" -> builder.shadowEnabled(true);
                 case "no_shadow" -> builder.shadowEnabled(false);

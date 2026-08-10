@@ -50,6 +50,8 @@ public final class ItemTextOptions {
 
     private final AmountDisplay amountDisplay;
 
+    private final @Nullable Integer amount;
+
     private final boolean showAmountWhenOne;
 
     private final String pattern;
@@ -77,6 +79,8 @@ public final class ItemTextOptions {
         this.removeItalic = builder.removeItalic;
 
         this.amountDisplay = builder.amountDisplay;
+
+        this.amount = builder.amount;
 
         this.showAmountWhenOne = builder.showAmountWhenOne;
 
@@ -141,6 +145,22 @@ public final class ItemTextOptions {
     public AmountDisplay amountDisplay() {
 
         return amountDisplay;
+
+    }
+
+
+
+    /**
+
+     * Display amount override. When {@code null}, {@link ItemStack#getAmount()} is used.
+
+     * Any {@code int} value is accepted (negative, zero, or above max stack size).
+
+     */
+
+    public @Nullable Integer amount() {
+
+        return amount;
 
     }
 
@@ -242,6 +262,8 @@ public final class ItemTextOptions {
 
                 .amountDisplay(amountDisplay)
 
+                .amount(amount)
+
                 .showAmountWhenOne(showAmountWhenOne)
 
                 .displayRarityColor(displayRarityColor)
@@ -271,6 +293,8 @@ public final class ItemTextOptions {
         private boolean removeItalic = true;
 
         private AmountDisplay amountDisplay = AmountDisplay.SUBSCRIPT;
+
+        private @Nullable Integer amount = null;
 
         private boolean showAmountWhenOne = false;
 
@@ -323,6 +347,24 @@ public final class ItemTextOptions {
         public Builder amountDisplay(AmountDisplay amountDisplay) {
 
             this.amountDisplay = Objects.requireNonNull(amountDisplay, "amountDisplay");
+
+            return this;
+
+        }
+
+
+
+        /**
+
+         * Sets the displayed amount, overriding {@link ItemStack#getAmount()}.
+
+         * Pass {@code null} to use the stack size again.
+
+         */
+
+        public Builder amount(@Nullable Integer amount) {
+
+            this.amount = amount;
 
             return this;
 

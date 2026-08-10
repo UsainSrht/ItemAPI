@@ -142,7 +142,8 @@ public final class ItemText {
     }
 
     private static Tag amountTag(ArgumentQueue args, ItemStack item, ItemTextOptions options, AmountDisplay display) {
-        int amount = item.getAmount();
+        Integer override = options.amount();
+        int amount = override != null ? override : item.getAmount();
         if (amount == 1 && !options.showAmountWhenOne()) {
             return Tag.selfClosingInserting(Component.empty());
         }
