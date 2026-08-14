@@ -29,7 +29,7 @@ Maven:
 <dependency>
     <groupId>me.usainsrht.itemapi</groupId>
     <artifactId>yamlitem</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
 </dependency>
 ```
 
@@ -58,8 +58,8 @@ Text fields use **MiniMessage**.
 | `name` / `custom_name` | `custom_name` |
 | `item_name` | `item_name` |
 | `lore` | `lore` |
-| `enchantments` | `enchantments` |
-| `stored_enchantments` | `stored_enchantments` |
+| `enchantments` / `enchants` | `enchantments` |
+| `stored_enchantments` / `stored_enchants` | `stored_enchantments` |
 | `unbreakable` | `unbreakable` |
 | `glint` / `enchantment_glint_override` | `enchantment_glint_override` |
 | `hide_tooltip` | `tooltip_display.hide_tooltip` |
@@ -233,7 +233,9 @@ shiny_pick:
 | `group` | `cooldown_group` |
 | `song` | `jukebox_song` |
 | `attribute` / `type` | in attribute modifiers |
-| `enchantment` / `id` | in enchantment list entries |
+| `enchantments` | `enchants` |
+| `stored_enchantments` | `stored_enchants` |
+| `enchantment` / `id` | `enchant`, `enchants` (in enchantment list entries) |
 | `slot` / `slot_group` | in attribute modifiers |
 | `particles` | `has_consume_particles` |
 

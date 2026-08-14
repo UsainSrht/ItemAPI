@@ -323,9 +323,12 @@ public final class ComponentHandlers {
             } else if (value instanceof List<?> list) {
                 for (int i = 0; i < list.size(); i++) {
                     YamlNode entry = HandlerSupport.asNode(list.get(i), path + "[" + i + "]");
+                    String enchKey = entry.contains("enchantment") ? "enchantment"
+                            : (entry.contains("enchant") ? "enchant"
+                            : (entry.contains("enchants") ? "enchants" : "id"));
                     Enchantment enchantment = RegistryUtil.require(Registry.ENCHANTMENT,
-                            entry.contains("enchantment") ? entry.raw("enchantment") : entry.raw("id"),
-                            entry.childPath(entry.contains("enchantment") ? "enchantment" : "id"));
+                            entry.raw(enchKey),
+                            entry.childPath(enchKey));
                     builder.add(enchantment, ValueUtil.requireInt(entry, "level"));
                 }
             } else {

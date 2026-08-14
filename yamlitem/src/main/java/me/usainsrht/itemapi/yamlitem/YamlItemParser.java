@@ -103,13 +103,19 @@ public final class YamlItemParser {
             applyValued(stack, DataComponentTypes.LORE, node.raw("lore"), node.childPath("lore"));
             applied.add("lore");
         }
-        if (node.contains("enchantments")) {
-            applyValued(stack, DataComponentTypes.ENCHANTMENTS, node.raw("enchantments"), node.childPath("enchantments"));
+        if (node.contains("enchantments") || node.contains("enchants")) {
+            Object value = node.contains("enchantments") ? node.raw("enchantments") : node.raw("enchants");
+            String path = node.contains("enchantments") ? node.childPath("enchantments") : node.childPath("enchants");
+            applyValued(stack, DataComponentTypes.ENCHANTMENTS, value, path);
             applied.add("enchantments");
+            applied.add("enchants");
         }
-        if (node.contains("stored_enchantments")) {
-            applyValued(stack, DataComponentTypes.STORED_ENCHANTMENTS, node.raw("stored_enchantments"), node.childPath("stored_enchantments"));
+        if (node.contains("stored_enchantments") || node.contains("stored_enchants")) {
+            Object value = node.contains("stored_enchantments") ? node.raw("stored_enchantments") : node.raw("stored_enchants");
+            String path = node.contains("stored_enchantments") ? node.childPath("stored_enchantments") : node.childPath("stored_enchants");
+            applyValued(stack, DataComponentTypes.STORED_ENCHANTMENTS, value, path);
             applied.add("stored_enchantments");
+            applied.add("stored_enchants");
         }
         if (node.contains("unbreakable") || node.contains("!unbreakable")) {
             String key = node.contains("unbreakable") ? "unbreakable" : "!unbreakable";
@@ -158,7 +164,7 @@ public final class YamlItemParser {
 
         // Any other root key that matches a component id (except meta keys) is treated as a shortcut
         for (String key : node.keys()) {
-            if (ROOT_META_KEYS.contains(key) || applied.contains(key) || key.equals("name") || key.equals("glint")) {
+            if (ROOT_META_KEYS.contains(key) || applied.contains(key) || key.equals("name") || key.equals("glint") || key.equals("enchants") || key.equals("stored_enchants")) {
                 continue;
             }
             String componentId = key.startsWith("!") ? key.substring(1) : key;

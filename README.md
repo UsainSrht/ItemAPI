@@ -80,8 +80,8 @@ You can use intuitive root keys directly in YAML:
 - `name` / `custom_name`: Custom display name (MiniMessage string)
 - `item_name`: Item name override (MiniMessage string)
 - `lore`: List of lore lines (MiniMessage strings)
-- `enchantments`: Map of enchantment keys to levels (e.g. `sharpness: 5`)
-- `stored_enchantments`: Map of stored enchantments for enchanted books
+- `enchantments` / `enchants`: Map of enchantment keys to levels (e.g. `sharpness: 5`)
+- `stored_enchantments` / `stored_enchants`: Map of stored enchantments for enchanted books
 - `unbreakable`: Boolean flag (`true`/`false`)
 - `glint` / `enchantment_glint_override`: Custom glint override (`true`/`false`)
 - `hide_tooltip`: Boolean flag (`true`/`false`) to hide entire item tooltip

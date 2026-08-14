@@ -24,6 +24,8 @@ public final class ComponentHandlerRegistry {
 
     public ComponentHandlerRegistry() {
         indexTypes();
+        registerAlias("enchants", DataComponentTypes.ENCHANTMENTS);
+        registerAlias("stored_enchants", DataComponentTypes.STORED_ENCHANTMENTS);
         ComponentHandlers.registerAll(this);
     }
 
@@ -59,6 +61,13 @@ public final class ComponentHandlerRegistry {
     public void register(DataComponentType type, ComponentHandler handler) {
         byType.put(type, handler);
         registerId(type);
+    }
+
+    public void registerAlias(String alias, DataComponentType type) {
+        String normalized = alias.toLowerCase(Locale.ROOT).trim();
+        byId.put(normalized, type);
+        byId.put("minecraft:" + normalized, type);
+        byId.put(normalized.replace('_', '-'), type);
     }
 
     public DataComponentType requireType(String id, String path) {
