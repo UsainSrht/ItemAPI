@@ -111,8 +111,9 @@ public final class YamlItemParser {
             applyValued(stack, DataComponentTypes.STORED_ENCHANTMENTS, node.raw("stored_enchantments"), node.childPath("stored_enchantments"));
             applied.add("stored_enchantments");
         }
-        if (node.contains("unbreakable")) {
-            applyFlagOrUnset(stack, DataComponentTypes.UNBREAKABLE, node.raw("unbreakable"), node.childPath("unbreakable"));
+        if (node.contains("unbreakable") || node.contains("!unbreakable")) {
+            String key = node.contains("unbreakable") ? "unbreakable" : "!unbreakable";
+            applyUnbreakable(stack, node.raw(key), node.childPath(key), key.startsWith("!"));
             applied.add("unbreakable");
         }
         if (node.contains("damage")) {
@@ -193,6 +194,14 @@ public final class YamlItemParser {
                 applied.add("hide_tooltip");
                 continue;
             }
+            if (componentId.equals("unbreakable")) {
+                if (applied.contains("unbreakable")) {
+                    continue; // root shortcut wins
+                }
+                applyUnbreakable(stack, components.raw(key), components.childPath(key), unsetPrefix);
+                applied.add("unbreakable");
+                continue;
+            }
             DataComponentType type = handlers.requireType(componentId, components.childPath(key));
             String id = type.getKey().getKey();
             if (applied.contains(id)) {
@@ -209,6 +218,66 @@ public final class YamlItemParser {
             }
             applyComponent(stack, type, key, value, components.childPath(key));
             applied.add(id);
+        }
+    }
+
+    public void applyUnbreakable(ItemStack stack, Object value, String path, boolean unsetPrefix) {
+        if (unsetPrefix) {
+            boolean shouldUnset = value == null || ValueUtil.asBoolean(value, path);
+            if (shouldUnset) {
+                stack.unsetData(DataComponentTypes.UNBREAKABLE);
+            }
+            return;
+        }
+        if (value == null) {
+            stack.unsetData(DataComponentTypes.UNBREAKABLE);
+            return;
+        }
+
+        boolean enabled = true;
+        boolean showInTooltip = true;
+
+        if (value instanceof Boolean bool) {
+            enabled = bool;
+        } else if (value instanceof ConfigurationSection section) {
+            YamlNode mapNode = YamlNode.of(section, path);
+            enabled = mapNode.contains("enabled") ? ValueUtil.boolOr(mapNode, "enabled", true) : true;
+            showInTooltip = mapNode.contains("show_in_tooltip") ? ValueUtil.boolOr(mapNode, "show_in_tooltip", true)
+                    : (mapNode.contains("show_tooltip") ? ValueUtil.boolOr(mapNode, "show_tooltip", true) : true);
+        } else if (value instanceof Map<?, ?> map) {
+            YamlNode mapNode = YamlNode.of(map, path);
+            enabled = mapNode.contains("enabled") ? ValueUtil.boolOr(mapNode, "enabled", true) : true;
+            showInTooltip = mapNode.contains("show_in_tooltip") ? ValueUtil.boolOr(mapNode, "show_in_tooltip", true)
+                    : (mapNode.contains("show_tooltip") ? ValueUtil.boolOr(mapNode, "show_tooltip", true) : true);
+        } else {
+            enabled = ValueUtil.asBoolean(value, path);
+        }
+
+        if (enabled) {
+            stack.setData(DataComponentTypes.UNBREAKABLE);
+            if (!showInTooltip) {
+                io.papermc.paper.datacomponent.item.TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
+                Set<DataComponentType> hidden = new HashSet<>(existing != null ? existing.hiddenComponents() : Set.of());
+                hidden.add(DataComponentTypes.UNBREAKABLE);
+                io.papermc.paper.datacomponent.item.TooltipDisplay.Builder builder = io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
+                        .hiddenComponents(hidden);
+                if (existing != null) {
+                    builder.hideTooltip(existing.hideTooltip());
+                }
+                stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
+            } else {
+                io.papermc.paper.datacomponent.item.TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
+                if (existing != null && existing.hiddenComponents().contains(DataComponentTypes.UNBREAKABLE)) {
+                    Set<DataComponentType> hidden = new HashSet<>(existing.hiddenComponents());
+                    hidden.remove(DataComponentTypes.UNBREAKABLE);
+                    io.papermc.paper.datacomponent.item.TooltipDisplay.Builder builder = io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
+                            .hiddenComponents(hidden)
+                            .hideTooltip(existing.hideTooltip());
+                    stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
+                }
+            }
+        } else {
+            stack.unsetData(DataComponentTypes.UNBREAKABLE);
         }
     }
 
@@ -237,8 +306,20 @@ public final class YamlItemParser {
     }
 
     private void applyComponent(ItemStack stack, DataComponentType type, String key, Object value, String path) {
+        boolean unsetPrefix = key != null && key.startsWith("!");
+        if (unsetPrefix) {
+            boolean shouldUnset = value == null || ValueUtil.asBoolean(value, path);
+            if (shouldUnset) {
+                stack.unsetData(type);
+            }
+            return;
+        }
         if (value == null) {
             stack.unsetData(type);
+            return;
+        }
+        if (type == DataComponentTypes.UNBREAKABLE) {
+            applyUnbreakable(stack, value, path, false);
             return;
         }
         if (type instanceof DataComponentType.NonValued nonValued) {

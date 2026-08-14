@@ -120,7 +120,8 @@ public final class ComponentHandlers {
 
     public static void registerAll(ComponentHandlerRegistry registry) {
         // Non-valued flags
-        registry.register(DataComponentTypes.UNBREAKABLE, flag());
+        registry.register(DataComponentTypes.UNBREAKABLE, (stack, type, value, path, parser) ->
+                parser.applyUnbreakable(stack, value, path, false));
         registry.register(DataComponentTypes.INTANGIBLE_PROJECTILE, flag());
         registry.register(DataComponentTypes.GLIDER, flag());
 

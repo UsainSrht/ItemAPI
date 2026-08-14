@@ -29,7 +29,7 @@ Maven:
 <dependency>
     <groupId>me.usainsrht.itemapi</groupId>
     <artifactId>yamlitem</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.5</version>
 </dependency>
 ```
 
