@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 /**
  * Lightweight view over a ConfigurationSection or Map for YAML parsing.
@@ -135,5 +136,46 @@ public final class YamlNode {
             configuration.set(entry.getKey(), entry.getValue());
         }
         return configuration;
+    }
+
+    public YamlNode preprocessed(@Nullable UnaryOperator<String> preprocessor) {
+        if (preprocessor == null) {
+            return this;
+        }
+        Map<String, Object> transformed = new LinkedHashMap<>(values.size());
+        for (Map.Entry<String, Object> entry : values.entrySet()) {
+            transformed.put(entry.getKey(), transformValue(entry.getValue(), preprocessor));
+        }
+        return new YamlNode(transformed, path);
+    }
+
+    private static Object transformValue(Object value, UnaryOperator<String> preprocessor) {
+        if (value instanceof String str) {
+            return preprocessor.apply(str);
+        }
+        if (value instanceof ConfigurationSection section) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            for (String key : section.getKeys(false)) {
+                map.put(key, transformValue(section.get(key), preprocessor));
+            }
+            return map;
+        }
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> transformedMap = new LinkedHashMap<>(map.size());
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getKey() != null) {
+                    transformedMap.put(String.valueOf(entry.getKey()), transformValue(entry.getValue(), preprocessor));
+                }
+            }
+            return transformedMap;
+        }
+        if (value instanceof List<?> list) {
+            List<Object> transformedList = new ArrayList<>(list.size());
+            for (Object item : list) {
+                transformedList.add(transformValue(item, preprocessor));
+            }
+            return transformedList;
+        }
+        return value;
     }
 }

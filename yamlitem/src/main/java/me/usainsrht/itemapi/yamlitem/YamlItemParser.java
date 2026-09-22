@@ -9,6 +9,7 @@ import me.usainsrht.itemapi.yamlitem.handler.Modern26Handlers;
 import me.usainsrht.itemapi.yamlitem.internal.TextUtil;
 import me.usainsrht.itemapi.yamlitem.internal.ValueUtil;
 import me.usainsrht.itemapi.yamlitem.internal.YamlNode;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
@@ -17,7 +18,9 @@ import org.bukkit.inventory.ItemType;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Parses YAML maps/sections into {@link ItemStack}s using Paper data components.
@@ -31,17 +34,81 @@ public final class YamlItemParser {
             "material", "type", "item", "amount", "count", "components"
     );
 
-    private final ComponentHandlerRegistry handlers = new ComponentHandlerRegistry();
+    private final Supplier<ComponentHandlerRegistry> handlersSupplier;
+    private ComponentHandlerRegistry handlers;
+    private final YamlItemOptions options;
+
+    public YamlItemParser() {
+        this(ComponentHandlerRegistry::new, YamlItemOptions.empty());
+    }
+
+    public YamlItemParser(ComponentHandlerRegistry handlers, YamlItemOptions options) {
+        this.handlersSupplier = () -> handlers;
+        this.handlers = Objects.requireNonNull(handlers, "handlers");
+        this.options = Objects.requireNonNull(options, "options");
+    }
+
+    public YamlItemParser(Supplier<ComponentHandlerRegistry> handlersSupplier, YamlItemOptions options) {
+        this.handlersSupplier = Objects.requireNonNull(handlersSupplier, "handlersSupplier");
+        this.options = Objects.requireNonNull(options, "options");
+    }
+
+    public YamlItemParser withOptions(YamlItemOptions options) {
+        if (this.handlers != null) {
+            return new YamlItemParser(this.handlers, options);
+        }
+        return new YamlItemParser(this.handlersSupplier, options);
+    }
+
+    public YamlItemParser withResolvers(TagResolver... resolvers) {
+        return withOptions(YamlItemOptions.of(resolvers));
+    }
+
+    public YamlItemOptions options() {
+        return options;
+    }
 
     public ItemStack parse(ConfigurationSection section) {
-        return parse(YamlNode.of(section));
+        return parse(section, this.options);
+    }
+
+    public ItemStack parse(ConfigurationSection section, TagResolver... tagResolvers) {
+        return parse(section, YamlItemOptions.of(tagResolvers));
+    }
+
+    public ItemStack parse(ConfigurationSection section, YamlItemOptions options) {
+        return parse(YamlNode.of(section), options);
     }
 
     public ItemStack parse(Map<?, ?> map) {
-        return parse(YamlNode.of(map));
+        return parse(map, this.options);
+    }
+
+    public ItemStack parse(Map<?, ?> map, TagResolver... tagResolvers) {
+        return parse(map, YamlItemOptions.of(tagResolvers));
+    }
+
+    public ItemStack parse(Map<?, ?> map, YamlItemOptions options) {
+        return parse(YamlNode.of(map), options);
     }
 
     public ItemStack parse(YamlNode node) {
+        return parse(node, this.options);
+    }
+
+    public ItemStack parse(YamlNode node, TagResolver... tagResolvers) {
+        return parse(node, YamlItemOptions.of(tagResolvers));
+    }
+
+    public ItemStack parse(YamlNode node, YamlItemOptions options) {
+        YamlItemParser scoped = withOptions(options);
+        if (options.stringPreprocessor() != null) {
+            node = node.preprocessed(options.stringPreprocessor());
+        }
+        return scoped.parseDirect(node);
+    }
+
+    private ItemStack parseDirect(YamlNode node) {
         Material material = resolveMaterial(node);
         int amount = ValueUtil.intOr(node, "amount", ValueUtil.intOr(node, "count", 1));
         ItemStack stack = ItemStack.of(material, Math.max(1, amount));
@@ -170,7 +237,7 @@ public final class YamlItemParser {
                 continue;
             }
             String componentId = key.startsWith("!") ? key.substring(1) : key;
-            DataComponentType type = handlers.resolveType(componentId);
+            DataComponentType type = handlers().resolveType(componentId);
             if (type == null) {
                 continue;
             }
@@ -210,7 +277,7 @@ public final class YamlItemParser {
                 applied.add("unbreakable");
                 continue;
             }
-            DataComponentType type = handlers.requireType(componentId, components.childPath(key));
+            DataComponentType type = handlers().requireType(componentId, components.childPath(key));
             String id = type.getKey().getKey();
             if (applied.contains(id)) {
                 continue; // root shortcut wins
@@ -230,7 +297,7 @@ public final class YamlItemParser {
     }
 
     public void applyUnbreakable(ItemStack stack, Object value, String path, boolean unsetPrefix) {
-        DataComponentType unbreakableType = handlers.resolveType("unbreakable");
+        DataComponentType unbreakableType = handlers().resolveType("unbreakable");
         if (unbreakableType == null) {
             return;
         }
@@ -265,7 +332,7 @@ public final class YamlItemParser {
             enabled = ValueUtil.asBoolean(value, path);
         }
 
-        if (handlers.hasType("tooltip_display")) {
+        if (handlers().hasType("tooltip_display")) {
             Modern26Handlers.applyUnbreakable(stack, enabled, showInTooltip);
         } else {
             Legacy1214Handlers.applyUnbreakable(stack, unbreakableType, enabled, showInTooltip);
@@ -283,10 +350,10 @@ public final class YamlItemParser {
 
     private void applyHideTooltip(ItemStack stack, Object value, String path) {
         boolean hide = value == null || ValueUtil.asBoolean(value, path);
-        if (handlers.hasType("tooltip_display")) {
+        if (handlers().hasType("tooltip_display")) {
             Modern26Handlers.applyHideTooltip(stack, hide);
         } else {
-            DataComponentType hideTooltip = handlers.resolveType("hide_tooltip");
+            DataComponentType hideTooltip = handlers().resolveType("hide_tooltip");
             if (hideTooltip instanceof DataComponentType.NonValued nonValued) {
                 if (hide) {
                     stack.setData(nonValued);
@@ -336,22 +403,28 @@ public final class YamlItemParser {
             stack.unsetData(type);
             return;
         }
-        ComponentHandler handler = handlers.requireHandler(type, path);
+        ComponentHandler handler = handlers().requireHandler(type, path);
         handler.apply(stack, type, value, path, this);
     }
 
     public ComponentHandlerRegistry handlers() {
+        if (handlers == null) {
+            handlers = handlersSupplier.get();
+        }
         return handlers;
     }
 
     public ItemStack parseNestedItem(Object value, String path) {
         if (value instanceof ConfigurationSection section) {
-            return parse(YamlNode.of(section, path));
+            return parse(section, this.options);
         }
         if (value instanceof Map<?, ?> map) {
-            return parse(YamlNode.of(map, path));
+            return parse(map, this.options);
         }
         if (value instanceof String text) {
+            if (options.stringPreprocessor() != null) {
+                text = options.stringPreprocessor().apply(text);
+            }
             Material material = Material.matchMaterial(text);
             if (material == null) {
                 throw new YamlParseException(path, "unknown material: " + text);
@@ -363,6 +436,17 @@ public final class YamlItemParser {
 
     public static String asMiniMessagePath(String path) {
         return path;
+    }
+
+    public net.kyori.adventure.text.Component parseText(Object value, String path) {
+        if (value instanceof net.kyori.adventure.text.Component component) {
+            return component;
+        }
+        String raw = String.valueOf(value);
+        if (options.stringPreprocessor() != null) {
+            raw = options.stringPreprocessor().apply(raw);
+        }
+        return TextUtil.deserialize(options.miniMessage(), raw, options.tagResolver());
     }
 
     public static net.kyori.adventure.text.Component text(Object value, String path) {

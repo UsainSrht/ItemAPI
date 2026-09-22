@@ -131,12 +131,12 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
 
 ConfigurationSection section = config.getConfigurationSection("cool_sword");
-try {
-    ItemStack itemStack = YamlItem.parse(section);
-    player.getInventory().addItem(itemStack);
-} catch (YamlParseException ex) {
-    getLogger().warning("Invalid item configuration: " + ex.getMessage());
-}
+// Parse with static default options
+ItemStack itemStack = YamlItem.parse(section);
+
+// Or parse with TagResolvers (custom tags / MiniPlaceholders)
+TagResolver playerTags = TagResolver.resolver("player", Tag.inserting(Component.text(player.getName())));
+ItemStack dynamicItem = YamlItem.parse(section, playerTags);
 ```
 
 ---

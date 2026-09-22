@@ -111,9 +111,9 @@ public final class ComponentHandlers {
 
         // Text
         registry.register(DataComponentTypes.CUSTOM_NAME, (stack, type, value, path, parser) ->
-                HandlerSupport.set(stack, type, HandlerSupport.component(value, path)));
+                HandlerSupport.set(stack, type, HandlerSupport.component(value, path, parser)));
         registry.register(DataComponentTypes.ITEM_NAME, (stack, type, value, path, parser) ->
-                HandlerSupport.set(stack, type, HandlerSupport.component(value, path)));
+                HandlerSupport.set(stack, type, HandlerSupport.component(value, path, parser)));
         registry.register(DataComponentTypes.LORE, ComponentHandlers::lore);
 
         // Keys
@@ -274,7 +274,7 @@ public final class ComponentHandlers {
     }
 
     private static void lore(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
-        List<Component> lines = HandlerSupport.components(value, path);
+        List<Component> lines = HandlerSupport.components(value, path, parser);
         HandlerSupport.set(stack, type, ItemLore.lore(lines));
     }
 
@@ -660,7 +660,7 @@ public final class ComponentHandlers {
                 .resolved(ValueUtil.boolOr(node, "resolved", false));
         if (node.contains("pages")) {
             for (Object page : node.list("pages")) {
-                builder.addPage(HandlerSupport.component(page, node.childPath("pages")));
+                builder.addPage(HandlerSupport.component(page, node.childPath("pages"), parser));
             }
         }
         HandlerSupport.set(stack, type, builder.build());

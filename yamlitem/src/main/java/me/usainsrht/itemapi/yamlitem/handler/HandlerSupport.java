@@ -57,19 +57,27 @@ final class HandlerSupport {
         stack.setData((DataComponentType.Valued<T>) type, value);
     }
 
-    static Component component(Object value, String path) {
-        return YamlItemParser.text(value, path);
+    static Component component(Object value, String path, @Nullable YamlItemParser parser) {
+        return parser != null ? parser.parseText(value, path) : YamlItemParser.text(value, path);
     }
 
-    static List<Component> components(Object value, String path) {
+    static Component component(Object value, String path) {
+        return component(value, path, null);
+    }
+
+    static List<Component> components(Object value, String path, @Nullable YamlItemParser parser) {
         if (!(value instanceof List<?> list)) {
-            return List.of(component(value, path));
+            return List.of(component(value, path, parser));
         }
         List<Component> result = new ArrayList<>(list.size());
         for (int i = 0; i < list.size(); i++) {
-            result.add(component(list.get(i), path + "[" + i + "]"));
+            result.add(component(list.get(i), path + "[" + i + "]", parser));
         }
         return result;
+    }
+
+    static List<Component> components(Object value, String path) {
+        return components(value, path, null);
     }
 
     static PotionEffect potionEffect(Object value, String path) {

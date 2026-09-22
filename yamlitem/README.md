@@ -33,6 +33,28 @@ Maven:
 </dependency>
 ```
 
+### Placeholders & MiniPlaceholders
+
+`YamlItem.parse` supports Kyori Adventure `TagResolver`s (including MiniPlaceholders) and optional string preprocessors:
+
+```java
+// 1. Using Adventure TagResolvers (custom tags)
+TagResolver customTags = TagResolver.resolver("player", Tag.inserting(Component.text(player.getName())));
+ItemStack item = YamlItem.parse(section, customTags);
+
+// 2. With MiniPlaceholders
+TagResolver playerTags = MiniPlaceholders.getAudiencePlaceholders(player);
+ItemStack item = YamlItem.parse(section, playerTags);
+
+// 3. Using YamlItemOptions (with PlaceholderAPI or custom string transformers)
+YamlItemOptions options = YamlItemOptions.builder()
+        .tagResolvers(playerTags)
+        .stringPreprocessor(raw -> PlaceholderAPI.setPlaceholders(player, raw))
+        .build();
+
+ItemStack item = YamlItem.parse(section, options);
+```
+
 ---
 
 ## How parsing works
