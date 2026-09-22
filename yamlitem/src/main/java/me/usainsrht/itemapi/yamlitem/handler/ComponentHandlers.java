@@ -412,7 +412,7 @@ public final class ComponentHandlers {
             return;
         }
         YamlNode node = HandlerSupport.asNode(value, path);
-        float seconds = ValueUtil.floatOr(node, "seconds", ValueUtil.requireFloat(node, "value"));
+        Float seconds = ValueUtil.boxedFloat(node, "seconds"); if (seconds == null) { seconds = ValueUtil.boxedFloat(node, "value"); } if (seconds == null) { throw new YamlParseException(path, "missing seconds or value for use-cooldown"); }
         UseCooldown.Builder builder = UseCooldown.useCooldown(seconds);
         Key group = ValueUtil.keyOrNull(node, "cooldown_group");
         if (group == null) {

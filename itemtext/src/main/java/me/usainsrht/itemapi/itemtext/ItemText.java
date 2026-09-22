@@ -128,7 +128,7 @@ public final class ItemText {
     }
 
     private static Component sprite(ItemStack item, ItemTextOptions options) {
-        Component sprite = ItemSpriteFactory.create(item);
+        Component sprite = ItemSpriteFactory.create(item, options);
         TextColor color = options.spriteColor();
         if (color != null) {
             sprite = sprite.color(color);

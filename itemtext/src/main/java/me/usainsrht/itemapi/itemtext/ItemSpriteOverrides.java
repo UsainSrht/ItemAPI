@@ -172,6 +172,6 @@ final class ItemSpriteOverrides {
         };
     }
 
-    record SpriteRef(Key atlas, Key sprite) {
+    record SpriteRef(Key atlas, Key sprite) implements SpriteTarget {
     }
 }

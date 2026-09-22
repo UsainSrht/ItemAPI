@@ -68,6 +68,8 @@ public final class ItemTextOptions {
 
     private final boolean containerShowAsBundle;
 
+    private final boolean usePlayerHeadsFor3DBlocks;
+
 
 
     private ItemTextOptions(Builder builder) {
@@ -97,6 +99,8 @@ public final class ItemTextOptions {
         this.hoverEnabled = builder.hoverEnabled;
 
         this.containerShowAsBundle = builder.containerShowAsBundle;
+
+        this.usePlayerHeadsFor3DBlocks = builder.usePlayerHeadsFor3DBlocks;
 
     }
 
@@ -250,6 +254,26 @@ public final class ItemTextOptions {
 
 
 
+    /**
+
+     * When {@code true} (the default), items and blocks with 3D or entity models (such as
+
+     * chests, mob heads, and heavy core) are rendered using 2D player head font glyphs with
+
+     * curated, asynchronous client-cached skin textures. When {@code false}, they fall back
+
+     * to standard block/item atlas sprites.
+
+     */
+
+    public boolean usePlayerHeadsFor3DBlocks() {
+
+        return usePlayerHeadsFor3DBlocks;
+
+    }
+
+
+
     public Builder toBuilder() {
 
         return new Builder()
@@ -278,7 +302,9 @@ public final class ItemTextOptions {
 
                 .hoverEnabled(hoverEnabled)
 
-                .containerShowAsBundle(containerShowAsBundle);
+                .containerShowAsBundle(containerShowAsBundle)
+
+                .usePlayerHeadsFor3DBlocks(usePlayerHeadsFor3DBlocks);
 
     }
 
@@ -311,6 +337,8 @@ public final class ItemTextOptions {
         private boolean hoverEnabled = true;
 
         private boolean containerShowAsBundle = true;
+
+        private boolean usePlayerHeadsFor3DBlocks = true;
 
 
 
@@ -451,6 +479,16 @@ public final class ItemTextOptions {
         public Builder containerShowAsBundle(boolean containerShowAsBundle) {
 
             this.containerShowAsBundle = containerShowAsBundle;
+
+            return this;
+
+        }
+
+
+
+        public Builder usePlayerHeadsFor3DBlocks(boolean usePlayerHeadsFor3DBlocks) {
+
+            this.usePlayerHeadsFor3DBlocks = usePlayerHeadsFor3DBlocks;
 
             return this;
 

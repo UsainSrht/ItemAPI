@@ -138,7 +138,7 @@ public final class YamlItemParser {
             applyValued(stack, DataComponentTypes.CUSTOM_MODEL_DATA, node.raw("custom_model_data"), node.childPath("custom_model_data"));
             applied.add("custom_model_data");
         }
-        if (node.contains("glint") || node.contains("enchantment_glint_override")) {
+        if (node.contains("glint") || node.contains("enchantment_glint_override") || node.contains("enchantment-glint-override")) {
             Object value = node.contains("glint") ? node.raw("glint") : node.raw("enchantment_glint_override");
             String path = node.contains("glint") ? node.childPath("glint") : node.childPath("enchantment_glint_override");
             applyValued(stack, DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, value, path);
