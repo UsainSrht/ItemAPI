@@ -3,9 +3,7 @@ package me.usainsrht.itemapi.yamlitem.handler;
 import io.papermc.paper.block.BlockPredicate;
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.datacomponent.item.AttackRange;
 import io.papermc.paper.datacomponent.item.BannerPatternLayers;
-import io.papermc.paper.datacomponent.item.BlocksAttacks;
 import io.papermc.paper.datacomponent.item.BundleContents;
 import io.papermc.paper.datacomponent.item.ChargedProjectiles;
 import io.papermc.paper.datacomponent.item.Consumable;
@@ -24,31 +22,22 @@ import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import io.papermc.paper.datacomponent.item.ItemEnchantments;
 import io.papermc.paper.datacomponent.item.ItemLore;
 import io.papermc.paper.datacomponent.item.JukeboxPlayable;
-import io.papermc.paper.datacomponent.item.KineticWeapon;
 import io.papermc.paper.datacomponent.item.LodestoneTracker;
 import io.papermc.paper.datacomponent.item.MapDecorations;
 import io.papermc.paper.datacomponent.item.MapId;
 import io.papermc.paper.datacomponent.item.MapItemColor;
 import io.papermc.paper.datacomponent.item.OminousBottleAmplifier;
-import io.papermc.paper.datacomponent.item.PiercingWeapon;
 import io.papermc.paper.datacomponent.item.PotDecorations;
 import io.papermc.paper.datacomponent.item.PotionContents;
 import io.papermc.paper.datacomponent.item.Repairable;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
 import io.papermc.paper.datacomponent.item.SeededContainerLoot;
-import io.papermc.paper.datacomponent.item.SulfurCubeContent;
 import io.papermc.paper.datacomponent.item.SuspiciousStewEffects;
-import io.papermc.paper.datacomponent.item.SwingAnimation;
 import io.papermc.paper.datacomponent.item.Tool;
-import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import io.papermc.paper.datacomponent.item.UseCooldown;
-import io.papermc.paper.datacomponent.item.UseEffects;
 import io.papermc.paper.datacomponent.item.UseRemainder;
-import io.papermc.paper.datacomponent.item.Weapon;
 import io.papermc.paper.datacomponent.item.WritableBookContent;
 import io.papermc.paper.datacomponent.item.WrittenBookContent;
-import io.papermc.paper.datacomponent.item.blocksattacks.DamageReduction;
-import io.papermc.paper.datacomponent.item.blocksattacks.ItemDamageFunction;
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
 import io.papermc.paper.item.MapPostProcessing;
 import io.papermc.paper.potion.SuspiciousEffectEntry;
@@ -72,25 +61,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.block.banner.Pattern;
 import org.bukkit.block.banner.PatternType;
-import org.bukkit.damage.DamageType;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Axolotl;
-import org.bukkit.entity.Cat;
-import org.bukkit.entity.Chicken;
-import org.bukkit.entity.Cow;
-import org.bukkit.entity.Fox;
-import org.bukkit.entity.Frog;
-import org.bukkit.entity.Horse;
-import org.bukkit.entity.Llama;
-import org.bukkit.entity.MushroomCow;
-import org.bukkit.entity.Parrot;
-import org.bukkit.entity.Pig;
-import org.bukkit.entity.Rabbit;
-import org.bukkit.entity.Salmon;
-import org.bukkit.entity.TropicalFish;
-import org.bukkit.entity.Villager;
-import org.bukkit.entity.Wolf;
-import org.bukkit.entity.ZombieNautilus;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.inventory.ItemRarity;
@@ -111,7 +82,8 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Registers handlers for every {@link DataComponentTypes} entry in Paper 26.2.
+ * Registers handlers for Paper 1.21.4+ item data components, delegating 26.x-specific
+ * components to {@link Modern26Handlers}.
  */
 public final class ComponentHandlers {
 
@@ -119,9 +91,14 @@ public final class ComponentHandlers {
     }
 
     public static void registerAll(ComponentHandlerRegistry registry) {
-        // Non-valued flags
-        registry.register(DataComponentTypes.UNBREAKABLE, (stack, type, value, path, parser) ->
-                parser.applyUnbreakable(stack, value, path, false));
+        // Unbreakable (handles 1.21.4 Valued and 26.x NonValued)
+        DataComponentType unbreakableType = registry.resolveType("unbreakable");
+        if (unbreakableType != null) {
+            registry.register(unbreakableType, (stack, type, value, path, parser) ->
+                    parser.applyUnbreakable(stack, value, path, false));
+        }
+
+        // Flags
         registry.register(DataComponentTypes.INTANGIBLE_PROJECTILE, flag());
         registry.register(DataComponentTypes.GLIDER, flag());
 
@@ -130,8 +107,6 @@ public final class ComponentHandlers {
         registry.register(DataComponentTypes.MAX_DAMAGE, integer());
         registry.register(DataComponentTypes.DAMAGE, integer());
         registry.register(DataComponentTypes.REPAIR_COST, integer());
-        registry.register(DataComponentTypes.MINIMUM_ATTACK_CHARGE, floatValue());
-        registry.register(DataComponentTypes.POTION_DURATION_SCALE, floatValue());
         registry.register(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, booleanValue());
 
         // Text
@@ -144,7 +119,6 @@ public final class ComponentHandlers {
         // Keys
         registry.register(DataComponentTypes.ITEM_MODEL, keyValue());
         registry.register(DataComponentTypes.TOOLTIP_STYLE, keyValue());
-        registry.register(DataComponentTypes.BREAK_SOUND, keyValue());
         registry.register(DataComponentTypes.NOTE_BLOCK_SOUND, keyValue());
 
         // Enums / simple registry
@@ -152,24 +126,13 @@ public final class ComponentHandlers {
                 HandlerSupport.set(stack, type, ValueUtil.enumValue(ItemRarity.class, value, path)));
         registry.register(DataComponentTypes.MAP_POST_PROCESSING, (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, ValueUtil.enumValue(MapPostProcessing.class, value, path)));
-        registry.register(DataComponentTypes.DAMAGE_TYPE, (stack, type, value, path, parser) ->
-                HandlerSupport.set(stack, type, RegistryUtil.require(RegistryKey.DAMAGE_TYPE, value, path)));
         registry.register(DataComponentTypes.INSTRUMENT, (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, RegistryUtil.require(Registry.INSTRUMENT, value, path)));
-        registry.register(DataComponentTypes.PROVIDES_TRIM_MATERIAL, (stack, type, value, path, parser) ->
-                HandlerSupport.set(stack, type, RegistryUtil.require(Registry.TRIM_MATERIAL, value, path)));
         registry.register(DataComponentTypes.PAINTING_VARIANT, (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, RegistryUtil.require(Registry.ART, value, path)));
 
-        // Colors / dyes
-        registry.register(DataComponentTypes.DYE, dyeColor());
+        // Colors
         registry.register(DataComponentTypes.BASE_COLOR, dyeColor());
-        registry.register(DataComponentTypes.CAT_COLLAR, dyeColor());
-        registry.register(DataComponentTypes.WOLF_COLLAR, dyeColor());
-        registry.register(DataComponentTypes.SHEEP_COLOR, dyeColor());
-        registry.register(DataComponentTypes.SHULKER_COLOR, dyeColor());
-        registry.register(DataComponentTypes.TROPICAL_FISH_BASE_COLOR, dyeColor());
-        registry.register(DataComponentTypes.TROPICAL_FISH_PATTERN_COLOR, dyeColor());
         registry.register(DataComponentTypes.DYED_COLOR, ComponentHandlers::dyedColor);
         registry.register(DataComponentTypes.MAP_COLOR, ComponentHandlers::mapColor);
 
@@ -188,9 +151,7 @@ public final class ComponentHandlers {
         registry.register(DataComponentTypes.FOOD, ComponentHandlers::food);
         registry.register(DataComponentTypes.CONSUMABLE, ComponentHandlers::consumable);
         registry.register(DataComponentTypes.USE_COOLDOWN, ComponentHandlers::useCooldown);
-        registry.register(DataComponentTypes.USE_EFFECTS, ComponentHandlers::useEffects);
         registry.register(DataComponentTypes.USE_REMAINDER, ComponentHandlers::useRemainder);
-        registry.register(DataComponentTypes.WEAPON, ComponentHandlers::weapon);
         registry.register(DataComponentTypes.TOOL, ComponentHandlers::tool);
         registry.register(DataComponentTypes.EQUIPPABLE, ComponentHandlers::equippable);
         registry.register(DataComponentTypes.REPAIRABLE, ComponentHandlers::repairable);
@@ -203,13 +164,10 @@ public final class ComponentHandlers {
                 HandlerSupport.set(stack, type, HandlerSupport.fireworkEffect(value, path)));
         registry.register(DataComponentTypes.TRIM, ComponentHandlers::trim);
         registry.register(DataComponentTypes.JUKEBOX_PLAYABLE, ComponentHandlers::jukebox);
-        registry.register(DataComponentTypes.TOOLTIP_DISPLAY, ComponentHandlers::tooltipDisplay);
         registry.register(DataComponentTypes.LODESTONE_TRACKER, ComponentHandlers::lodestone);
         registry.register(DataComponentTypes.BUNDLE_CONTENTS, nestedItems(BundleContents::bundleContents));
         registry.register(DataComponentTypes.CONTAINER, nestedItems(ItemContainerContents::containerContents));
         registry.register(DataComponentTypes.CHARGED_PROJECTILES, nestedItems(ChargedProjectiles::chargedProjectiles));
-        registry.register(DataComponentTypes.SULFUR_CUBE_CONTENT, (stack, type, value, path, parser) ->
-                HandlerSupport.set(stack, type, SulfurCubeContent.sulfurCubeContent(parser.parseNestedItem(value, path))));
         registry.register(DataComponentTypes.CONTAINER_LOOT, ComponentHandlers::containerLoot);
         registry.register(DataComponentTypes.MAP_ID, (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, MapId.mapId(ValueUtil.asInt(value, path))));
@@ -224,48 +182,25 @@ public final class ComponentHandlers {
         registry.register(DataComponentTypes.CAN_PLACE_ON, adventurePredicate());
         registry.register(DataComponentTypes.CAN_BREAK, adventurePredicate());
         registry.register(DataComponentTypes.DEATH_PROTECTION, ComponentHandlers::deathProtection);
-        registry.register(DataComponentTypes.BLOCKS_ATTACKS, ComponentHandlers::blocksAttacks);
-        registry.register(DataComponentTypes.ATTACK_RANGE, ComponentHandlers::attackRange);
-        registry.register(DataComponentTypes.PIERCING_WEAPON, ComponentHandlers::piercingWeapon);
-        registry.register(DataComponentTypes.KINETIC_WEAPON, ComponentHandlers::kineticWeapon);
-        registry.register(DataComponentTypes.SWING_ANIMATION, ComponentHandlers::swingAnimation);
         registry.register(DataComponentTypes.RECIPES, ComponentHandlers::recipes);
-        registry.register(DataComponentTypes.PROVIDES_BANNER_PATTERNS, (stack, type, value, path, parser) ->
-                HandlerSupport.set(stack, type, RegistryUtil.keySet(RegistryKey.BANNER_PATTERN, value, path)));
         registry.register(DataComponentTypes.BLOCK_DATA, (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, io.papermc.paper.datacomponent.item.BlockItemDataProperties.blockItemStateProperties().build()));
 
-        // Entity variants
-        registerVariants(registry);
+        // 1.21.4 hide tooltip flags
+        if (registry.hasType("hide_tooltip")) {
+            registry.register(registry.resolveType("hide_tooltip"), flag());
+        }
+        if (registry.hasType("hide_additional_tooltip")) {
+            registry.register(registry.resolveType("hide_additional_tooltip"), flag());
+        }
+
+        // Modern 26.x components
+        if (registry.hasType("blocks_attacks") || registry.hasType("tooltip_display") || registry.hasType("weapon")) {
+            Modern26Handlers.registerAll(registry);
+        }
     }
 
-    private static void registerVariants(ComponentHandlerRegistry registry) {
-        registry.register(DataComponentTypes.FOX_VARIANT, enumComponent(Fox.Type.class));
-        registry.register(DataComponentTypes.SALMON_SIZE, enumComponent(Salmon.Variant.class));
-        registry.register(DataComponentTypes.PARROT_VARIANT, enumComponent(Parrot.Variant.class));
-        registry.register(DataComponentTypes.TROPICAL_FISH_PATTERN, enumComponent(TropicalFish.Pattern.class));
-        registry.register(DataComponentTypes.MOOSHROOM_VARIANT, enumComponent(MushroomCow.Variant.class));
-        registry.register(DataComponentTypes.RABBIT_VARIANT, enumComponent(Rabbit.Type.class));
-        registry.register(DataComponentTypes.HORSE_VARIANT, enumComponent(Horse.Color.class));
-        registry.register(DataComponentTypes.LLAMA_VARIANT, enumComponent(Llama.Color.class));
-        registry.register(DataComponentTypes.AXOLOTL_VARIANT, enumComponent(Axolotl.Variant.class));
-
-        registry.register(DataComponentTypes.VILLAGER_VARIANT, registryComponent(RegistryKey.VILLAGER_TYPE));
-        registry.register(DataComponentTypes.WOLF_VARIANT, registryComponent(RegistryKey.WOLF_VARIANT));
-        registry.register(DataComponentTypes.WOLF_SOUND_VARIANT, registryComponent(RegistryKey.WOLF_SOUND_VARIANT));
-        registry.register(DataComponentTypes.CAT_VARIANT, registryComponent(RegistryKey.CAT_VARIANT));
-        registry.register(DataComponentTypes.CAT_SOUND_VARIANT, registryComponent(RegistryKey.CAT_SOUND_VARIANT));
-        registry.register(DataComponentTypes.FROG_VARIANT, registryComponent(RegistryKey.FROG_VARIANT));
-        registry.register(DataComponentTypes.PIG_VARIANT, registryComponent(RegistryKey.PIG_VARIANT));
-        registry.register(DataComponentTypes.PIG_SOUND_VARIANT, registryComponent(RegistryKey.PIG_SOUND_VARIANT));
-        registry.register(DataComponentTypes.COW_VARIANT, registryComponent(RegistryKey.COW_VARIANT));
-        registry.register(DataComponentTypes.COW_SOUND_VARIANT, registryComponent(RegistryKey.COW_SOUND_VARIANT));
-        registry.register(DataComponentTypes.CHICKEN_VARIANT, registryComponent(RegistryKey.CHICKEN_VARIANT));
-        registry.register(DataComponentTypes.CHICKEN_SOUND_VARIANT, registryComponent(RegistryKey.CHICKEN_SOUND_VARIANT));
-        registry.register(DataComponentTypes.ZOMBIE_NAUTILUS_VARIANT, registryComponent(RegistryKey.ZOMBIE_NAUTILUS_VARIANT));
-    }
-
-    private static ComponentHandler flag() {
+    static ComponentHandler flag() {
         return (stack, type, value, path, parser) -> {
             boolean enabled = value == null || ValueUtil.asBoolean(value, path);
             if (enabled) {
@@ -276,37 +211,37 @@ public final class ComponentHandlers {
         };
     }
 
-    private static ComponentHandler integer() {
+    static ComponentHandler integer() {
         return (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, ValueUtil.asInt(value, path));
     }
 
-    private static ComponentHandler floatValue() {
+    static ComponentHandler floatValue() {
         return (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, ValueUtil.asFloat(value, path));
     }
 
-    private static ComponentHandler booleanValue() {
+    static ComponentHandler booleanValue() {
         return (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, ValueUtil.asBoolean(value, path));
     }
 
-    private static ComponentHandler keyValue() {
+    static ComponentHandler keyValue() {
         return (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, ValueUtil.key(value, path));
     }
 
-    private static ComponentHandler dyeColor() {
+    static ComponentHandler dyeColor() {
         return (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, ValueUtil.enumValue(DyeColor.class, value, path));
     }
 
-    private static <E extends Enum<E>> ComponentHandler enumComponent(Class<E> enumType) {
+    static <E extends Enum<E>> ComponentHandler enumComponent(Class<E> enumType) {
         return (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, ValueUtil.enumValue(enumType, value, path));
     }
 
-    private static <T extends org.bukkit.Keyed> ComponentHandler registryComponent(RegistryKey<T> registryKey) {
+    static <T extends org.bukkit.Keyed> ComponentHandler registryComponent(RegistryKey<T> registryKey) {
         return (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, RegistryUtil.require(registryKey, value, path));
     }
@@ -424,26 +359,9 @@ public final class ComponentHandlers {
         HandlerSupport.set(stack, type, builder.build());
     }
 
-    private static void useEffects(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
-        YamlNode node = HandlerSupport.asNode(value, path);
-        UseEffects.Builder builder = UseEffects.useEffects()
-                .canSprint(ValueUtil.boolOr(node, "can_sprint", true))
-                .interactVibrations(ValueUtil.boolOr(node, "interact_vibrations", true))
-                .speedMultiplier(ValueUtil.floatOr(node, "speed_multiplier", 1f));
-        HandlerSupport.set(stack, type, builder.build());
-    }
-
     private static void useRemainder(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
         ItemStack remainder = parser.parseNestedItem(value, path);
         HandlerSupport.set(stack, type, UseRemainder.useRemainder(remainder));
-    }
-
-    private static void weapon(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
-        YamlNode node = HandlerSupport.asNode(value, path);
-        Weapon.Builder builder = Weapon.weapon()
-                .itemDamagePerAttack(ValueUtil.intOr(node, "item_damage_per_attack", ValueUtil.intOr(node, "damage_per_attack", 1)))
-                .disableBlockingForSeconds(ValueUtil.floatOr(node, "disable_blocking_for_seconds", 0f));
-        HandlerSupport.set(stack, type, builder.build());
     }
 
     private static void tool(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
@@ -630,23 +548,6 @@ public final class ComponentHandlers {
         HandlerSupport.set(stack, type, JukeboxPlayable.jukeboxPlayable(song).build());
     }
 
-    private static void tooltipDisplay(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
-        YamlNode node = HandlerSupport.asNode(value, path);
-        TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
-        boolean defaultHideTooltip = existing != null && existing.hideTooltip();
-        TooltipDisplay.Builder builder = TooltipDisplay.tooltipDisplay()
-                .hideTooltip(ValueUtil.boolOr(node, "hide_tooltip", defaultHideTooltip));
-        if (node.contains("hidden_components")) {
-            Set<DataComponentType> hidden = new HashSet<>();
-            for (Object element : node.list("hidden_components")) {
-                hidden.add(parser.handlers().requireType(String.valueOf(element), node.childPath("hidden_components")));
-            }
-            builder.hiddenComponents(hidden);
-        } else if (existing != null) {
-            builder.hiddenComponents(existing.hiddenComponents());
-        }
-        HandlerSupport.set(stack, type, builder.build());
-    }
 
     private static void lodestone(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
         YamlNode node = HandlerSupport.asNode(value, path);
@@ -831,112 +732,6 @@ public final class ComponentHandlers {
         HandlerSupport.set(stack, type, DeathProtection.deathProtection(HandlerSupport.consumeEffects(effects, path)));
     }
 
-    private static void blocksAttacks(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
-        YamlNode node = HandlerSupport.asNode(value, path);
-        BlocksAttacks.Builder builder = BlocksAttacks.blocksAttacks()
-                .blockDelaySeconds(ValueUtil.floatOr(node, "block_delay_seconds", 0f))
-                .disableCooldownScale(ValueUtil.floatOr(node, "disable_cooldown_scale", 1f));
-        if (node.contains("bypassed_by")) {
-            builder.bypassedBy(RegistryUtil.keySet(RegistryKey.DAMAGE_TYPE, node, "bypassed_by"));
-        }
-        Key blockSound = ValueUtil.keyOrNull(node, "block_sound");
-        if (blockSound != null) builder.blockSound(blockSound);
-        Key disableSound = ValueUtil.keyOrNull(node, "disable_sound");
-        if (disableSound != null) builder.disableSound(disableSound);
-        if (node.contains("item_damage")) {
-            YamlNode damageNode = node.requireChild("item_damage");
-            builder.itemDamage(ItemDamageFunction.itemDamageFunction()
-                    .threshold(ValueUtil.floatOr(damageNode, "threshold", 0f))
-                    .base(ValueUtil.floatOr(damageNode, "base", 0f))
-                    .factor(ValueUtil.floatOr(damageNode, "factor", 1f))
-                    .build());
-        }
-        if (node.contains("damage_reductions")) {
-            List<?> list = node.list("damage_reductions");
-            for (int i = 0; i < list.size(); i++) {
-                YamlNode reduction = HandlerSupport.asNode(list.get(i), node.childPath("damage_reductions") + "[" + i + "]");
-                DamageReduction.Builder reductionBuilder = DamageReduction.damageReduction()
-                        .horizontalBlockingAngle(ValueUtil.floatOr(reduction, "horizontal_blocking_angle", 90f))
-                        .base(ValueUtil.floatOr(reduction, "base", 0f))
-                        .factor(ValueUtil.floatOr(reduction, "factor", 1f));
-                if (reduction.contains("type") || reduction.contains("types")) {
-                    String key = reduction.contains("type") ? "type" : "types";
-                    reductionBuilder.type(RegistryUtil.keySet(RegistryKey.DAMAGE_TYPE, reduction, key));
-                }
-                builder.addDamageReduction(reductionBuilder.build());
-            }
-        }
-        HandlerSupport.set(stack, type, builder.build());
-    }
-
-    private static void attackRange(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
-        YamlNode node = HandlerSupport.asNode(value, path);
-        AttackRange.Builder builder = AttackRange.attackRange()
-                .minReach(ValueUtil.floatOr(node, "min_reach", 0f))
-                .maxReach(ValueUtil.floatOr(node, "max_reach", 3f))
-                .minCreativeReach(ValueUtil.floatOr(node, "min_creative_reach", 0f))
-                .maxCreativeReach(ValueUtil.floatOr(node, "max_creative_reach", 5f))
-                .hitboxMargin(ValueUtil.floatOr(node, "hitbox_margin", 0f))
-                .mobFactor(ValueUtil.floatOr(node, "mob_factor", 1f));
-        HandlerSupport.set(stack, type, builder.build());
-    }
-
-    private static void piercingWeapon(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
-        YamlNode node = HandlerSupport.asNode(value, path);
-        PiercingWeapon.Builder builder = PiercingWeapon.piercingWeapon()
-                .dealsKnockback(ValueUtil.boolOr(node, "deals_knockback", true))
-                .dismounts(ValueUtil.boolOr(node, "dismounts", false));
-        Key sound = ValueUtil.keyOrNull(node, "sound");
-        if (sound != null) builder.sound(sound);
-        Key hitSound = ValueUtil.keyOrNull(node, "hit_sound");
-        if (hitSound != null) builder.hitSound(hitSound);
-        HandlerSupport.set(stack, type, builder.build());
-    }
-
-    private static void kineticWeapon(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
-        YamlNode node = HandlerSupport.asNode(value, path);
-        KineticWeapon.Builder builder = KineticWeapon.kineticWeapon()
-                .contactCooldownTicks(ValueUtil.intOr(node, "contact_cooldown_ticks", 0))
-                .delayTicks(ValueUtil.intOr(node, "delay_ticks", 0))
-                .forwardMovement(ValueUtil.floatOr(node, "forward_movement", 0f))
-                .damageMultiplier(ValueUtil.floatOr(node, "damage_multiplier", 1f));
-        if (node.contains("dismount_conditions")) {
-            builder.dismountConditions(condition(node.requireChild("dismount_conditions")));
-        }
-        if (node.contains("knockback_conditions")) {
-            builder.knockbackConditions(condition(node.requireChild("knockback_conditions")));
-        }
-        if (node.contains("damage_conditions")) {
-            builder.damageConditions(condition(node.requireChild("damage_conditions")));
-        }
-        Key sound = ValueUtil.keyOrNull(node, "sound");
-        if (sound != null) builder.sound(sound);
-        Key hitSound = ValueUtil.keyOrNull(node, "hit_sound");
-        if (hitSound != null) builder.hitSound(hitSound);
-        HandlerSupport.set(stack, type, builder.build());
-    }
-
-    private static KineticWeapon.Condition condition(YamlNode node) {
-        return KineticWeapon.condition(
-                ValueUtil.intOr(node, "max_duration_ticks", 0),
-                ValueUtil.floatOr(node, "min_speed", 0f),
-                ValueUtil.floatOr(node, "min_relative_speed", 0f)
-        );
-    }
-
-    private static void swingAnimation(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
-        SwingAnimation.Builder builder = SwingAnimation.swingAnimation();
-        if (value instanceof String) {
-            builder.type(ValueUtil.enumValue(SwingAnimation.Animation.class, value, path));
-        } else {
-            YamlNode node = HandlerSupport.asNode(value, path);
-            if (node.contains("type")) {
-                builder.type(ValueUtil.enumValue(node, "type", SwingAnimation.Animation.class));
-            }
-            builder.duration(ValueUtil.intOr(node, "duration", 6));
-        }
-        HandlerSupport.set(stack, type, builder.build());
-    }
 
     private static void recipes(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
         List<Key> keys = new ArrayList<>();

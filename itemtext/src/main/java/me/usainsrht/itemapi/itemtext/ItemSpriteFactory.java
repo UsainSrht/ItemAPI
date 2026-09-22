@@ -6,7 +6,6 @@ import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.object.ObjectContents;
 import net.kyori.adventure.text.object.PlayerHeadObjectContents;
-import net.kyori.adventure.text.object.SpriteObjectContents;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ItemType;
@@ -15,8 +14,21 @@ import org.jspecify.annotations.Nullable;
 final class ItemSpriteFactory {
 
     private static final Key ITEMS_ATLAS = Key.key("minecraft", "items");
-    private static final Key BLOCKS_ATLAS = SpriteObjectContents.DEFAULT_ATLAS;
+    private static final Key BLOCKS_ATLAS = Key.key("minecraft", "blocks");
     private static final Key STEVE_SKIN = Key.key("minecraft", "entity/player/wide/steve");
+
+    private static final boolean OBJECT_CONTENTS_SUPPORTED;
+
+    static {
+        boolean supported;
+        try {
+            Class.forName("net.kyori.adventure.text.object.ObjectContents");
+            supported = true;
+        } catch (Throwable ignored) {
+            supported = false;
+        }
+        OBJECT_CONTENTS_SUPPORTED = supported;
+    }
 
     private ItemSpriteFactory() {
     }
@@ -26,6 +38,10 @@ final class ItemSpriteFactory {
     }
 
     static Component create(ItemStack item, ItemTextOptions options) {
+        if (!OBJECT_CONTENTS_SUPPORTED) {
+            return Component.empty();
+        }
+
         Material material = item.getType();
         if (material == Material.PLAYER_HEAD || material == Material.PLAYER_WALL_HEAD) {
             return playerHead(item);
@@ -33,15 +49,11 @@ final class ItemSpriteFactory {
 
         SpriteTarget target = resolve(item, options);
         if (target instanceof HeadTextureRegistry.HeadRef head) {
-            return Component.object(ObjectContents.playerHead()
-                    .id(head.id())
-                    .profileProperty(PlayerHeadObjectContents.property("textures", head.base64Texture()))
-                    .hat(true)
-                    .build());
+            return SpriteComponentBuilder.head(head);
         }
 
         ItemSpriteOverrides.SpriteRef sprite = (ItemSpriteOverrides.SpriteRef) target;
-        return Component.object(ObjectContents.sprite(sprite.atlas(), sprite.sprite()));
+        return SpriteComponentBuilder.sprite(sprite.atlas(), sprite.sprite());
     }
 
     /**
@@ -52,9 +64,31 @@ final class ItemSpriteFactory {
         ResolvableProfile profile = getProfile(item);
         if (profile != null) {
             // ResolvableProfile is a SkinSource — preserves uuid/name/properties
+            return SpriteComponentBuilder.playerHeadProfile(profile);
+        }
+        return SpriteComponentBuilder.playerHeadSteve(STEVE_SKIN);
+    }
+
+    private static final class SpriteComponentBuilder {
+        static Component sprite(Key atlas, Key sprite) {
+            return Component.object(ObjectContents.sprite(atlas, sprite));
+        }
+
+        static Component head(HeadTextureRegistry.HeadRef head) {
+            return Component.object(ObjectContents.playerHead()
+                    .id(head.id())
+                    .profileProperty(PlayerHeadObjectContents.property("textures", head.base64Texture()))
+                    .hat(true)
+                    .build());
+        }
+
+        static Component playerHeadProfile(ResolvableProfile profile) {
             return Component.object(ObjectContents.playerHead(profile));
         }
-        return Component.object(ObjectContents.playerHead().texture(STEVE_SKIN).build());
+
+        static Component playerHeadSteve(Key steveSkin) {
+            return Component.object(ObjectContents.playerHead().texture(steveSkin).build());
+        }
     }
 
     private static @Nullable ResolvableProfile getProfile(ItemStack item) {

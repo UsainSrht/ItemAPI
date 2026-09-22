@@ -78,6 +78,10 @@ public final class ComponentHandlerRegistry {
         return type;
     }
 
+    public boolean hasType(String id) {
+        return resolveType(id) != null;
+    }
+
     public DataComponentType resolveType(String id) {
         String normalized = id.toLowerCase(Locale.ROOT).trim();
         if (normalized.startsWith("!")) {

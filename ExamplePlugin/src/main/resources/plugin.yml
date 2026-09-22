@@ -1,7 +1,7 @@
 name: ItemAPIExamplePlugin
 version: '1.0.0-SNAPSHOT'
 main: me.usainsrht.itemapi.example.ItemAPIExamplePlugin
-api-version: '26.2'
+api-version: '1.21'
 authors: [UsainSRHT]
 description: Example plugin for testing ItemAPI features
 commands:

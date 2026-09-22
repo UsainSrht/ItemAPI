@@ -4,6 +4,8 @@ import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import me.usainsrht.itemapi.yamlitem.handler.ComponentHandler;
 import me.usainsrht.itemapi.yamlitem.handler.ComponentHandlerRegistry;
+import me.usainsrht.itemapi.yamlitem.handler.Legacy1214Handlers;
+import me.usainsrht.itemapi.yamlitem.handler.Modern26Handlers;
 import me.usainsrht.itemapi.yamlitem.internal.TextUtil;
 import me.usainsrht.itemapi.yamlitem.internal.ValueUtil;
 import me.usainsrht.itemapi.yamlitem.internal.YamlNode;
@@ -228,15 +230,19 @@ public final class YamlItemParser {
     }
 
     public void applyUnbreakable(ItemStack stack, Object value, String path, boolean unsetPrefix) {
+        DataComponentType unbreakableType = handlers.resolveType("unbreakable");
+        if (unbreakableType == null) {
+            return;
+        }
         if (unsetPrefix) {
             boolean shouldUnset = value == null || ValueUtil.asBoolean(value, path);
             if (shouldUnset) {
-                stack.unsetData(DataComponentTypes.UNBREAKABLE);
+                stack.unsetData(unbreakableType);
             }
             return;
         }
         if (value == null) {
-            stack.unsetData(DataComponentTypes.UNBREAKABLE);
+            stack.unsetData(unbreakableType);
             return;
         }
 
@@ -259,31 +265,10 @@ public final class YamlItemParser {
             enabled = ValueUtil.asBoolean(value, path);
         }
 
-        if (enabled) {
-            stack.setData(DataComponentTypes.UNBREAKABLE);
-            if (!showInTooltip) {
-                io.papermc.paper.datacomponent.item.TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
-                Set<DataComponentType> hidden = new HashSet<>(existing != null ? existing.hiddenComponents() : Set.of());
-                hidden.add(DataComponentTypes.UNBREAKABLE);
-                io.papermc.paper.datacomponent.item.TooltipDisplay.Builder builder = io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
-                        .hiddenComponents(hidden);
-                if (existing != null) {
-                    builder.hideTooltip(existing.hideTooltip());
-                }
-                stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
-            } else {
-                io.papermc.paper.datacomponent.item.TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
-                if (existing != null && existing.hiddenComponents().contains(DataComponentTypes.UNBREAKABLE)) {
-                    Set<DataComponentType> hidden = new HashSet<>(existing.hiddenComponents());
-                    hidden.remove(DataComponentTypes.UNBREAKABLE);
-                    io.papermc.paper.datacomponent.item.TooltipDisplay.Builder builder = io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
-                            .hiddenComponents(hidden)
-                            .hideTooltip(existing.hideTooltip());
-                    stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
-                }
-            }
+        if (handlers.hasType("tooltip_display")) {
+            Modern26Handlers.applyUnbreakable(stack, enabled, showInTooltip);
         } else {
-            stack.unsetData(DataComponentTypes.UNBREAKABLE);
+            Legacy1214Handlers.applyUnbreakable(stack, unbreakableType, enabled, showInTooltip);
         }
     }
 
@@ -298,13 +283,18 @@ public final class YamlItemParser {
 
     private void applyHideTooltip(ItemStack stack, Object value, String path) {
         boolean hide = value == null || ValueUtil.asBoolean(value, path);
-        io.papermc.paper.datacomponent.item.TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
-        io.papermc.paper.datacomponent.item.TooltipDisplay.Builder builder = io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
-                .hideTooltip(hide);
-        if (existing != null) {
-            builder.hiddenComponents(existing.hiddenComponents());
+        if (handlers.hasType("tooltip_display")) {
+            Modern26Handlers.applyHideTooltip(stack, hide);
+        } else {
+            DataComponentType hideTooltip = handlers.resolveType("hide_tooltip");
+            if (hideTooltip instanceof DataComponentType.NonValued nonValued) {
+                if (hide) {
+                    stack.setData(nonValued);
+                } else {
+                    stack.unsetData(nonValued);
+                }
+            }
         }
-        stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
     }
 
     private void applyValued(ItemStack stack, DataComponentType type, Object value, String path) {
@@ -324,8 +314,13 @@ public final class YamlItemParser {
             stack.unsetData(type);
             return;
         }
-        if (type == DataComponentTypes.UNBREAKABLE) {
+        String typeKey = type.getKey().getKey();
+        if ("unbreakable".equals(typeKey)) {
             applyUnbreakable(stack, value, path, false);
+            return;
+        }
+        if ("hide_tooltip".equals(typeKey)) {
+            applyHideTooltip(stack, value, path);
             return;
         }
         if (type instanceof DataComponentType.NonValued nonValued) {

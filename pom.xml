@@ -6,7 +6,7 @@
 
     <groupId>me.usainsrht.itemapi</groupId>
     <artifactId>itemapi</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.8</version>
     <packaging>pom</packaging>
 
     <name>ItemAPI</name>
@@ -21,7 +21,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <paper.version>26.2.build.65-beta</paper.version>
         <miniplaceholders.version>3.2.0</miniplaceholders.version>
     </properties>
