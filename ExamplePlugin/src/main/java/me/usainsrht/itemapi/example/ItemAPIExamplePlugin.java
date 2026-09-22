@@ -1,5 +1,6 @@
 package me.usainsrht.itemapi.example;
 
+import me.usainsrht.itemapi.itemplaceholder.ItemExpansionProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ItemAPIExamplePlugin extends JavaPlugin {
@@ -24,5 +25,12 @@ public final class ItemAPIExamplePlugin extends JavaPlugin {
         }
         pluginCommand.setExecutor(command);
         pluginCommand.setTabCompleter(command);
+
+        // Register MiniPlaceholders expansion if the plugin is present
+        if (getServer().getPluginManager().getPlugin("MiniPlaceholders") != null) {
+            new ItemExpansionProvider().provideExpansion().register();
+            getLogger().info("MiniPlaceholders expansion registered.");
+        }
     }
 }
+

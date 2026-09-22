@@ -7,7 +7,7 @@
     <parent>
         <groupId>me.usainsrht.itemapi</groupId>
         <artifactId>itemapi</artifactId>
-        <version>1.0.8</version>
+        <version>1.0.9</version>
     </parent>
 
     <artifactId>exampleplugin</artifactId>
@@ -26,6 +26,14 @@
         <dependency>
             <groupId>me.usainsrht.itemapi</groupId>
             <artifactId>yamlitem</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>me.usainsrht.itemapi</groupId>
+            <artifactId>itemplaceholder</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.miniplaceholders</groupId>
+            <artifactId>miniplaceholders-api</artifactId>
         </dependency>
     </dependencies>
 
@@ -47,6 +55,7 @@
                                 <includes>
                                     <include>me.usainsrht.itemapi:itemtext</include>
                                     <include>me.usainsrht.itemapi:yamlitem</include>
+                                    <include>me.usainsrht.itemapi:itemplaceholder</include>
                                 </includes>
                             </artifactSet>
                         </configuration>

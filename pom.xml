@@ -6,7 +6,7 @@
 
     <groupId>me.usainsrht.itemapi</groupId>
     <artifactId>itemapi</artifactId>
-    <version>1.0.8</version>
+    <version>1.0.9</version>
     <packaging>pom</packaging>
 
     <name>ItemAPI</name>
@@ -55,6 +55,11 @@
             <dependency>
                 <groupId>me.usainsrht.itemapi</groupId>
                 <artifactId>yamlitem</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>me.usainsrht.itemapi</groupId>
+                <artifactId>itemplaceholder</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

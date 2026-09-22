@@ -5,6 +5,7 @@ import io.github.miniplaceholders.api.provider.ExpansionProvider;
 import io.github.miniplaceholders.api.provider.LoadRequirement;
 import io.github.miniplaceholders.api.types.Platform;
 import me.usainsrht.itemapi.itemtext.AmountDisplay;
+import me.usainsrht.itemapi.itemtext.ContentLoreMode;
 import me.usainsrht.itemapi.itemtext.ItemText;
 import me.usainsrht.itemapi.itemtext.ItemTextOptions;
 import net.kyori.adventure.text.Component;
@@ -34,6 +35,9 @@ import org.bukkit.inventory.ItemStack;
  *   <li>{@code sprite_none} / {@code no_sprite_color}</li>
  *   <li>{@code hover} / {@code no_hover}</li>
  *   <li>{@code bundle} / {@code no_bundle}: show container items as a bundle sprite (default: on)</li>
+ *   <li>{@code content_lore} / {@code no_content_lore}: enable/disable container content lore preview</li>
+ *   <li>{@code gui_view}: switch content lore mode to {@link ContentLoreMode#GUI_VIEW}</li>
+ *   <li>{@code total_stack}: switch content lore mode to {@link ContentLoreMode#TOTAL_STACK}</li>
  * </ul>
  */
 public final class ItemExpansionProvider implements ExpansionProvider {
@@ -93,6 +97,10 @@ public final class ItemExpansionProvider implements ExpansionProvider {
                 case "no_hover" -> builder.hoverEnabled(false);
                 case "bundle" -> builder.containerShowAsBundle(true);
                 case "no_bundle" -> builder.containerShowAsBundle(false);
+                case "content_lore" -> builder.contentLoreEnabled(true);
+                case "no_content_lore" -> builder.contentLoreEnabled(false);
+                case "gui_view" -> builder.contentLoreModeGuiView();
+                case "total_stack" -> builder.contentLoreModeTotalStack();
                 case "sprite_none", "no_sprite_color" -> builder.spriteColor(null);
                 case "shadow_color" -> {
                     if (queue.hasNext()) {

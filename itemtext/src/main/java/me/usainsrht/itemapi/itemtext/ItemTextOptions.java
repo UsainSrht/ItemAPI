@@ -1,509 +1,289 @@
 package me.usainsrht.itemapi.itemtext;
 
-
-
 import net.kyori.adventure.text.format.NamedTextColor;
-
 import net.kyori.adventure.text.format.ShadowColor;
-
 import net.kyori.adventure.text.format.TextColor;
-
 import org.jspecify.annotations.Nullable;
 
-
-
 import java.util.Objects;
-
-
+import java.util.function.UnaryOperator;
 
 /**
-
  * Formatting options for {@link ItemText}.
-
  */
-
 public final class ItemTextOptions {
-
-
 
     public static final String DEFAULT_PATTERN = "<item_sprite><subscript_number> <item_displayname>";
 
-
-
     /**
-
      * Vanilla-style text shadow: black at 25% opacity ({@code 0x40000000} ARGB).
-
      * Matches MiniMessage {@code <shadow>} default alpha of {@code 0.25}.
-
      */
-
     public static final ShadowColor DEFAULT_SHADOW_COLOR = ShadowColor.shadowColor(0x40000000);
 
-
-
     private final boolean displayBrackets;
-
     private final boolean displayCustomName;
-
     private final boolean removeItalic;
-
     private final AmountDisplay amountDisplay;
-
     private final @Nullable Integer amount;
-
     private final boolean showAmountWhenOne;
-
     private final String pattern;
-
     private final boolean displayRarityColor;
-
     private final boolean shadowEnabled;
-
     private final ShadowColor shadowColor;
-
     private final @Nullable TextColor spriteColor;
-
     private final boolean hoverEnabled;
-
     private final boolean containerShowAsBundle;
-
     private final boolean usePlayerHeadsFor3DBlocks;
-
-
+    private final ContentLoreOptions contentLore;
 
     private ItemTextOptions(Builder builder) {
-
         this.displayBrackets = builder.displayBrackets;
-
         this.displayCustomName = builder.displayCustomName;
-
         this.removeItalic = builder.removeItalic;
-
         this.amountDisplay = builder.amountDisplay;
-
         this.amount = builder.amount;
-
         this.showAmountWhenOne = builder.showAmountWhenOne;
-
         this.displayRarityColor = builder.displayRarityColor;
-
         this.pattern = builder.pattern;
-
         this.shadowEnabled = builder.shadowEnabled;
-
         this.shadowColor = builder.shadowColor;
-
         this.spriteColor = builder.spriteColor;
-
         this.hoverEnabled = builder.hoverEnabled;
-
         this.containerShowAsBundle = builder.containerShowAsBundle;
-
         this.usePlayerHeadsFor3DBlocks = builder.usePlayerHeadsFor3DBlocks;
-
+        this.contentLore = builder.contentLore;
     }
-
-
 
     public static ItemTextOptions defaults() {
-
         return builder().build();
-
     }
-
-
 
     public static Builder builder() {
-
         return new Builder();
-
     }
-
-
 
     public boolean displayBrackets() {
-
         return displayBrackets;
-
     }
-
-
 
     public boolean displayCustomName() {
-
         return displayCustomName;
-
     }
-
-
 
     public boolean removeItalic() {
-
         return removeItalic;
-
     }
-
-
 
     public AmountDisplay amountDisplay() {
-
         return amountDisplay;
-
     }
-
-
 
     /**
-
-     * Display amount override. When {@code null}, {@link ItemStack#getAmount()} is used.
-
+     * Display amount override. When {@code null}, {@link org.bukkit.inventory.ItemStack#getAmount()} is used.
      * Any {@code int} value is accepted (negative, zero, or above max stack size).
-
      */
-
     public @Nullable Integer amount() {
-
         return amount;
-
     }
-
-
 
     public boolean showAmountWhenOne() {
-
         return showAmountWhenOne;
-
     }
-
-
 
     public boolean displayRarityColor() {
-
         return displayRarityColor;
-
     }
-
-
 
     public String pattern() {
-
         return pattern;
-
     }
-
-
 
     public boolean shadowEnabled() {
-
         return shadowEnabled;
-
     }
-
-
 
     public ShadowColor shadowColor() {
-
         return shadowColor;
-
     }
-
-
 
     /**
-
      * Tint applied to {@code <item_sprite>}. {@code null} means no color (none).
-
      */
-
     public @Nullable TextColor spriteColor() {
-
         return spriteColor;
-
     }
-
-
 
     public boolean hoverEnabled() {
-
         return hoverEnabled;
-
     }
 
-
-
     /**
-
      * When {@code true} (the default), items that carry a {@code container} data component
-
      * (e.g. shulker boxes, chests-as-items with NBT) are displayed with a bundle sprite whose
-
-     * contents mirror the container tag.  All other item data and the display name are kept from
-
+     * contents mirror the container tag. All other item data and the display name are kept from
      * the original item; if the original has no custom name or item-name override the sprite uses
-
      * the original item's own translation key rather than the bundle's.
-
      */
-
     public boolean containerShowAsBundle() {
-
         return containerShowAsBundle;
-
     }
-
-
 
     /**
-
      * When {@code true} (the default), items and blocks with 3D or entity models (such as
-
      * chests, mob heads, and heavy core) are rendered using 2D player head font glyphs with
-
      * curated, asynchronous client-cached skin textures. When {@code false}, they fall back
-
      * to standard block/item atlas sprites.
-
      */
-
     public boolean usePlayerHeadsFor3DBlocks() {
-
         return usePlayerHeadsFor3DBlocks;
-
     }
 
-
+    public ContentLoreOptions contentLore() {
+        return contentLore;
+    }
 
     public Builder toBuilder() {
-
         return new Builder()
-
                 .displayBrackets(displayBrackets)
-
                 .displayCustomName(displayCustomName)
-
                 .removeItalic(removeItalic)
-
                 .amountDisplay(amountDisplay)
-
                 .amount(amount)
-
                 .showAmountWhenOne(showAmountWhenOne)
-
                 .displayRarityColor(displayRarityColor)
-
                 .pattern(pattern)
-
                 .shadowEnabled(shadowEnabled)
-
                 .shadowColor(shadowColor)
-
                 .spriteColor(spriteColor)
-
                 .hoverEnabled(hoverEnabled)
-
                 .containerShowAsBundle(containerShowAsBundle)
-
-                .usePlayerHeadsFor3DBlocks(usePlayerHeadsFor3DBlocks);
-
+                .usePlayerHeadsFor3DBlocks(usePlayerHeadsFor3DBlocks)
+                .contentLore(contentLore);
     }
-
-
 
     public static final class Builder {
 
         private boolean displayBrackets = false;
-
         private boolean displayCustomName = true;
-
         private boolean removeItalic = true;
-
         private AmountDisplay amountDisplay = AmountDisplay.SUBSCRIPT;
-
         private @Nullable Integer amount = null;
-
         private boolean showAmountWhenOne = false;
-
         private boolean displayRarityColor = false;
-
         private String pattern = DEFAULT_PATTERN;
-
         private boolean shadowEnabled = false;
-
         private ShadowColor shadowColor = DEFAULT_SHADOW_COLOR;
-
         private @Nullable TextColor spriteColor = NamedTextColor.WHITE;
-
         private boolean hoverEnabled = true;
-
         private boolean containerShowAsBundle = true;
-
         private boolean usePlayerHeadsFor3DBlocks = true;
-
-
+        private ContentLoreOptions contentLore = ContentLoreOptions.defaults();
 
         public Builder displayBrackets(boolean displayBrackets) {
-
             this.displayBrackets = displayBrackets;
-
             return this;
-
         }
-
-
 
         public Builder displayCustomName(boolean displayCustomName) {
-
             this.displayCustomName = displayCustomName;
-
             return this;
-
         }
-
-
 
         public Builder removeItalic(boolean removeItalic) {
-
             this.removeItalic = removeItalic;
-
             return this;
-
         }
-
-
 
         public Builder amountDisplay(AmountDisplay amountDisplay) {
-
             this.amountDisplay = Objects.requireNonNull(amountDisplay, "amountDisplay");
-
             return this;
-
         }
-
-
 
         /**
-
-         * Sets the displayed amount, overriding {@link ItemStack#getAmount()}.
-
+         * Sets the displayed amount, overriding {@link org.bukkit.inventory.ItemStack#getAmount()}.
          * Pass {@code null} to use the stack size again.
-
          */
-
         public Builder amount(@Nullable Integer amount) {
-
             this.amount = amount;
-
             return this;
-
         }
-
-
 
         public Builder showAmountWhenOne(boolean showAmountWhenOne) {
-
             this.showAmountWhenOne = showAmountWhenOne;
-
             return this;
-
         }
-
-
 
         public Builder displayRarityColor(boolean displayRarityColor) {
-
             this.displayRarityColor = displayRarityColor;
-
             return this;
-
         }
-
-
 
         public Builder pattern(String pattern) {
-
             this.pattern = Objects.requireNonNull(pattern, "pattern");
-
             return this;
-
         }
-
-
 
         public Builder shadowEnabled(boolean shadowEnabled) {
-
             this.shadowEnabled = shadowEnabled;
-
             return this;
-
         }
-
-
 
         public Builder shadowColor(ShadowColor shadowColor) {
-
             this.shadowColor = Objects.requireNonNull(shadowColor, "shadowColor");
-
             return this;
-
         }
-
-
 
         /**
-
          * Sets sprite tint. Pass {@code null} for none (no color applied).
-
          */
-
         public Builder spriteColor(@Nullable TextColor spriteColor) {
-
             this.spriteColor = spriteColor;
-
             return this;
-
         }
-
-
 
         public Builder hoverEnabled(boolean hoverEnabled) {
-
             this.hoverEnabled = hoverEnabled;
-
             return this;
-
         }
-
-
 
         public Builder containerShowAsBundle(boolean containerShowAsBundle) {
-
             this.containerShowAsBundle = containerShowAsBundle;
-
             return this;
-
         }
-
-
 
         public Builder usePlayerHeadsFor3DBlocks(boolean usePlayerHeadsFor3DBlocks) {
-
             this.usePlayerHeadsFor3DBlocks = usePlayerHeadsFor3DBlocks;
-
             return this;
-
         }
 
+        public Builder contentLore(ContentLoreOptions contentLore) {
+            this.contentLore = Objects.requireNonNull(contentLore, "contentLore");
+            return this;
+        }
 
+        public Builder contentLore(UnaryOperator<ContentLoreOptions.Builder> configurator) {
+            this.contentLore = configurator.apply(ContentLoreOptions.builder()).build();
+            return this;
+        }
+
+        public Builder contentLoreEnabled(boolean enabled) {
+            this.contentLore = this.contentLore.toBuilder().enabled(enabled).build();
+            return this;
+        }
+
+        public Builder contentLoreModeGuiView() {
+            this.contentLore = this.contentLore.toBuilder().mode(ContentLoreMode.GUI_VIEW).build();
+            return this;
+        }
+
+        public Builder contentLoreModeTotalStack() {
+            this.contentLore = this.contentLore.toBuilder().mode(ContentLoreMode.TOTAL_STACK).build();
+            return this;
+        }
 
         public ItemTextOptions build() {
-
             return new ItemTextOptions(this);
-
         }
-
     }
-
 }
-
-

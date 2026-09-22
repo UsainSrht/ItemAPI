@@ -4,6 +4,7 @@ main: me.usainsrht.itemapi.example.ItemAPIExamplePlugin
 api-version: '1.21'
 authors: [UsainSRHT]
 description: Example plugin for testing ItemAPI features
+soft-depend: [MiniPlaceholders, itemplaceholder]
 commands:
   itemapi:
     description: Get YAML items, reload config, or test item sprites

@@ -16,6 +16,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
 
+
 import java.util.List;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
@@ -75,13 +76,24 @@ public final class ItemText {
                     .build();
         }
         if (options.hoverEnabled()) {
-            // When containerShowAsBundle is on and the item has a container component,
-            // the hover shows a virtual bundle (all original data preserved, contents
-            // shown as bundle contents) instead of the raw container item.
-            ItemStack hoverItem = options.containerShowAsBundle()
+            // Determine base hover item (bundle representation or original)
+            ItemStack baseHoverItem = options.containerShowAsBundle()
                     ? bundleRepresentationOrSelf(item)
                     : item;
-            result = result.hoverEvent(hoverItem);
+
+            // If content lore preview is enabled and the item is a container, generate preview lore
+            if (options.contentLore() != null && options.contentLore().enabled() && ContainerLore.isContainer(item)) {
+                // Clone to avoid mutating original item
+                ItemStack previewItem = baseHoverItem.clone();
+                // Render lore lines (one Component per line)
+                List<Component> loreLines = ContainerLore.render(item, options.contentLore(), options);
+                if (!loreLines.isEmpty()) {
+                    previewItem.lore(loreLines);
+                }
+                result = result.hoverEvent(previewItem);
+            } else {
+                result = result.hoverEvent(baseHoverItem);
+            }
         }
         return result;
     }
