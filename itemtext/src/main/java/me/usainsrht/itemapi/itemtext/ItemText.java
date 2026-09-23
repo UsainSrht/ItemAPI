@@ -1,8 +1,6 @@
 package me.usainsrht.itemapi.itemtext;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.datacomponent.item.BundleContents;
-import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.ShadowColor;
@@ -46,6 +44,27 @@ public final class ItemText {
         defaultOptions = configurator.apply(defaultOptions.toBuilder()).build();
     }
 
+    /**
+     * Sets whether container items should be displayed as a virtual bundle by default.
+     */
+    public static void setContainerShowAsBundle(boolean enabled) {
+        setDefaultOptions(builder -> builder.containerShowAsBundle(enabled));
+    }
+
+    /**
+     * Sets global default container lore options.
+     */
+    public static void setContentLore(ContentLoreOptions options) {
+        setDefaultOptions(builder -> builder.contentLore(options));
+    }
+
+    /**
+     * Modifies global default container lore options using a builder configurator.
+     */
+    public static void setContentLore(UnaryOperator<ContentLoreOptions.Builder> configurator) {
+        setDefaultOptions(builder -> builder.contentLore(configurator));
+    }
+
     public static Component format(ItemStack item) {
         return format(item, defaultOptions);
     }
@@ -79,7 +98,7 @@ public final class ItemText {
         if (options.hoverEnabled()) {
             // Determine base hover item (bundle representation or original)
             ItemStack baseHoverItem = options.containerShowAsBundle()
-                    ? bundleRepresentationOrSelf(item)
+                    ? ContainerLore.toBundle(item)
                     : item;
 
             // If content lore preview is enabled and the item is a container, generate preview lore
@@ -100,44 +119,11 @@ public final class ItemText {
     }
 
     /**
-     * Returns {@code item} itself when it has no {@link DataComponentTypes#CONTAINER} component,
-     * otherwise returns a virtual {@link Material#BUNDLE} that:
-     * <ul>
-     *   <li>carries all data components of the original item (via {@link ItemStack#withType})</li>
-     *   <li>has {@code BUNDLE_CONTENTS} populated from the container's non-empty items</li>
-     *   <li>has the {@code CONTAINER} component removed (bundles don't carry it)</li>
-     *   <li>has {@code ITEM_NAME} set to the original item's translation key when the original
-     *       has neither a {@code CUSTOM_NAME} nor an {@code ITEM_NAME} override, so the hover
-     *       tooltip reads e.g. "Shulker Box" instead of "Bundle"</li>
-     * </ul>
+     * Converts a container {@link ItemStack} into its virtual {@link Material#BUNDLE} representation,
+     * or returns the original {@code item} if not a container.
      */
-    private static ItemStack bundleRepresentationOrSelf(ItemStack item) {
-        ItemContainerContents container = item.getData(DataComponentTypes.CONTAINER);
-        if (container == null) {
-            return item;
-        }
-
-        // withType copies all data components from the original item onto a new BUNDLE stack.
-        ItemStack bundle = item.withType(Material.BUNDLE);
-
-        // Swap CONTAINER → BUNDLE_CONTENTS.
-        List<ItemStack> contents = container.contents().stream()
-                .filter(c -> c != null && !c.getType().isAir() && c.getAmount() > 0)
-                .toList();
-        bundle.unsetData(DataComponentTypes.CONTAINER);
-        bundle.setData(DataComponentTypes.BUNDLE_CONTENTS,
-                BundleContents.bundleContents().addAll(contents).build());
-
-        // If the original had no explicit user-set name, stamp an ITEM_NAME with the original's
-        // translation key so the hover tooltip doesn't just read "Bundle".
-        boolean hasCustomName = item.hasItemMeta() && (item.getItemMeta().hasDisplayName() || item.getItemMeta().hasItemName());
-        if (!hasCustomName) {
-            Component translateComp = Component.translatable(item.getType().translationKey());
-            bundle.setData(DataComponentTypes.ITEM_NAME, translateComp);
-            bundle.editMeta(meta -> meta.itemName(translateComp));
-        }
-
-        return bundle;
+    public static ItemStack toBundle(ItemStack item) {
+        return ContainerLore.toBundle(item);
     }
 
     private static Component sprite(ItemStack item, ItemTextOptions options) {
@@ -243,5 +229,70 @@ public final class ItemText {
     public static Component format(ItemStack item, UnaryOperator<ItemTextOptions.Builder> configurator) {
         Objects.requireNonNull(configurator, "configurator");
         return format(item, configurator.apply(defaultOptions.toBuilder()).build());
+    }
+
+    /**
+     * Renders container content lore lines for {@code item} using global default options.
+     */
+    public static List<Component> containerLore(ItemStack item) {
+        return ContainerLore.render(item);
+    }
+
+    /**
+     * Renders container content lore lines for {@code item} using explicit {@link ContentLoreOptions}.
+     */
+    public static List<Component> containerLore(ItemStack item, ContentLoreOptions options) {
+        return ContainerLore.render(item, options);
+    }
+
+    /**
+     * Renders container content lore lines for {@code item} using explicit {@link ItemTextOptions}.
+     */
+    public static List<Component> containerLore(ItemStack item, ItemTextOptions options) {
+        return ContainerLore.render(item, options);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using global default options, replacing any existing lore.
+     */
+    public static ItemStack applyContainerLore(ItemStack item) {
+        return ContainerLore.apply(item);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using global default options.
+     *
+     * @param append if {@code true}, appends to existing lore; otherwise replaces existing lore
+     */
+    public static ItemStack applyContainerLore(ItemStack item, boolean append) {
+        return ContainerLore.apply(item, append);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using explicit {@link ContentLoreOptions}, replacing existing lore.
+     */
+    public static ItemStack applyContainerLore(ItemStack item, ContentLoreOptions options) {
+        return ContainerLore.apply(item, options);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using explicit {@link ContentLoreOptions}.
+     */
+    public static ItemStack applyContainerLore(ItemStack item, ContentLoreOptions options, boolean append) {
+        return ContainerLore.apply(item, options, append);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using explicit {@link ItemTextOptions}, replacing existing lore.
+     */
+    public static ItemStack applyContainerLore(ItemStack item, ItemTextOptions options) {
+        return ContainerLore.apply(item, options);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using explicit {@link ItemTextOptions}.
+     */
+    public static ItemStack applyContainerLore(ItemStack item, ItemTextOptions options, boolean append) {
+        return ContainerLore.apply(item, options, append);
     }
 }

@@ -1,11 +1,13 @@
 package me.usainsrht.itemapi.itemtext;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.BundleContents;
 import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,6 +26,163 @@ public final class ContainerLore {
 
     private ContainerLore() {
         // utility class
+    }
+
+    /**
+     * Renders container content lore for {@code item} using default {@link ItemText#defaultOptions()}.
+     *
+     * @param item the container item
+     * @return rendered lore lines
+     */
+    public static List<Component> render(ItemStack item) {
+        ItemTextOptions defaults = ItemText.defaultOptions();
+        return render(item, defaults.contentLore(), defaults);
+    }
+
+    /**
+     * Renders container content lore for {@code item} using explicit {@link ContentLoreOptions}
+     * and default {@link ItemText#defaultOptions()} as parent fallback.
+     */
+    public static List<Component> render(ItemStack item, ContentLoreOptions options) {
+        return render(item, options, ItemText.defaultOptions());
+    }
+
+    /**
+     * Renders container content lore for {@code item} using {@code options.contentLore()} and {@code options}.
+     */
+    public static List<Component> render(ItemStack item, ItemTextOptions options) {
+        Objects.requireNonNull(options, "options");
+        return render(item, options.contentLore(), options);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using default options, replacing any existing lore.
+     */
+    public static ItemStack apply(ItemStack item) {
+        return apply(item, false);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using default options.
+     *
+     * @param item   the item
+     * @param append if {@code true}, appends to existing lore; if {@code false}, replaces existing lore
+     */
+    public static ItemStack apply(ItemStack item, boolean append) {
+        ItemTextOptions defaults = ItemText.defaultOptions();
+        return apply(item, defaults.contentLore(), defaults, append);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using {@code options}, replacing existing lore.
+     */
+    public static ItemStack apply(ItemStack item, ContentLoreOptions options) {
+        return apply(item, options, false);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using {@code options}.
+     */
+    public static ItemStack apply(ItemStack item, ContentLoreOptions options, boolean append) {
+        return apply(item, options, ItemText.defaultOptions(), append);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using {@code options}, replacing existing lore.
+     */
+    public static ItemStack apply(ItemStack item, ItemTextOptions options) {
+        return apply(item, options, false);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using {@code options}.
+     */
+    public static ItemStack apply(ItemStack item, ItemTextOptions options, boolean append) {
+        Objects.requireNonNull(options, "options");
+        return apply(item, options.contentLore(), options, append);
+    }
+
+    /**
+     * Applies container content lore to a clone of {@code item} using {@code options} and {@code parentOptions}.
+     *
+     * @param item          the container item
+     * @param options       content lore options
+     * @param parentOptions parent item text options
+     * @param append        whether to append to existing lore or replace
+     * @return cloned item with container lore applied, or {@code item} itself if disabled or not a container
+     */
+    public static ItemStack apply(ItemStack item, ContentLoreOptions options, ItemTextOptions parentOptions, boolean append) {
+        Objects.requireNonNull(item, "item");
+        Objects.requireNonNull(options, "options");
+        Objects.requireNonNull(parentOptions, "parentOptions");
+
+        if (!options.enabled() || !isContainer(item)) {
+            return item;
+        }
+
+        List<Component> loreLines = render(item, options, parentOptions);
+        if (loreLines.isEmpty()) {
+            return item;
+        }
+
+        ItemStack clone = item.clone();
+        List<Component> existing = clone.lore();
+        if (append && existing != null && !existing.isEmpty()) {
+            List<Component> combined = new ArrayList<>(existing);
+            combined.addAll(loreLines);
+            clone.lore(combined);
+        } else {
+            clone.lore(loreLines);
+        }
+        return clone;
+    }
+
+    /**
+     * Returns {@code item} itself when it has no {@link DataComponentTypes#CONTAINER} component,
+     * otherwise returns a virtual {@link Material#BUNDLE} that:
+     * <ul>
+     *   <li>carries all data components of the original item (via {@link ItemStack#withType})</li>
+     *   <li>has {@code BUNDLE_CONTENTS} populated from the container's non-empty items</li>
+     *   <li>has the {@code CONTAINER} component removed (bundles don't carry it)</li>
+     *   <li>has {@code ITEM_NAME} set to the original item's translation key when the original
+     *       has neither a {@code CUSTOM_NAME} nor an {@code ITEM_NAME} override, so the hover
+     *       tooltip reads e.g. "Shulker Box" instead of "Bundle"</li>
+     * </ul>
+     */
+    public static ItemStack toBundle(ItemStack item) {
+        if (item == null) {
+            return null;
+        }
+        ItemContainerContents container = item.getData(DataComponentTypes.CONTAINER);
+        if (container == null) {
+            return item;
+        }
+
+        // withType copies all data components from the original item onto a new BUNDLE stack.
+        ItemStack bundle = item.withType(Material.BUNDLE);
+
+        // Swap CONTAINER → BUNDLE_CONTENTS.
+        List<ItemStack> contents = container.contents().stream()
+                .filter(c -> c != null && !c.getType().isAir() && c.getAmount() > 0)
+                .toList();
+        bundle.unsetData(DataComponentTypes.CONTAINER);
+        try {
+            bundle.setData(DataComponentTypes.BUNDLE_CONTENTS,
+                    BundleContents.bundleContents().addAll(contents).build());
+        } catch (Throwable ignored) {
+            // In unit tests or environments where Paper server bridge is unavailable
+        }
+
+        // If the original had no explicit user-set name, stamp an ITEM_NAME with the original's
+        // translation key so the hover tooltip doesn't just read "Bundle".
+        boolean hasCustomName = item.hasItemMeta() && (item.getItemMeta().hasDisplayName() || item.getItemMeta().hasItemName());
+        if (!hasCustomName) {
+            Component translateComp = Component.translatable(item.getType().translationKey());
+            bundle.setData(DataComponentTypes.ITEM_NAME, translateComp);
+            bundle.editMeta(meta -> meta.itemName(translateComp));
+        }
+
+        return bundle;
     }
 
     /**
@@ -178,5 +337,19 @@ public final class ContainerLore {
      */
     public static boolean isContainer(ItemStack item) {
         return item != null && item.getData(DataComponentTypes.CONTAINER) != null;
+    }
+
+    /**
+     * Returns {@code true} if the given item has a {@code CONTAINER} data component with at least one non-empty item.
+     */
+    public static boolean hasContents(ItemStack item) {
+        if (item == null) {
+            return false;
+        }
+        ItemContainerContents container = item.getData(DataComponentTypes.CONTAINER);
+        if (container == null) {
+            return false;
+        }
+        return container.contents().stream().anyMatch(s -> s != null && !s.getType().isAir() && s.getAmount() > 0);
     }
 }

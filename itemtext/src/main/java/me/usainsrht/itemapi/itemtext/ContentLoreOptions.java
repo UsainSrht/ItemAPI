@@ -1,9 +1,11 @@
 package me.usainsrht.itemapi.itemtext;
 
+import org.bukkit.configuration.ConfigurationSection;
 import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -49,6 +51,26 @@ public final class ContentLoreOptions {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Parses {@link ContentLoreOptions} from a {@link ConfigurationSection}, or returns {@link #defaults()} if {@code section} is null.
+     */
+    public static ContentLoreOptions fromConfig(@Nullable ConfigurationSection section) {
+        if (section == null) {
+            return defaults();
+        }
+        return builder().load(section).build();
+    }
+
+    /**
+     * Parses {@link ContentLoreOptions} from a {@link Map}, or returns {@link #defaults()} if {@code map} is null.
+     */
+    public static ContentLoreOptions fromMap(@Nullable Map<String, ?> map) {
+        if (map == null) {
+            return defaults();
+        }
+        return builder().load(map).build();
     }
 
     public boolean enabled() {
@@ -153,14 +175,224 @@ public final class ContentLoreOptions {
             return this;
         }
 
+        public Builder mode(String modeName) {
+            this.mode = ContentLoreMode.fromString(modeName, this.mode);
+            return this;
+        }
+
         public Builder header(List<String> header) {
-            this.header = new ArrayList<>(header);
+            this.header = new ArrayList<>(Objects.requireNonNull(header, "header"));
+            return this;
+        }
+
+        public Builder header(String... header) {
+            if (header == null) {
+                this.header = new ArrayList<>();
+            } else {
+                this.header = new ArrayList<>(List.of(header));
+            }
+            return this;
+        }
+
+        public Builder addHeader(String... lines) {
+            if (lines != null) {
+                for (String line : lines) {
+                    if (line != null) {
+                        this.header.add(line);
+                    }
+                }
+            }
             return this;
         }
 
         public Builder footer(List<String> footer) {
-            this.footer = new ArrayList<>(footer);
+            this.footer = new ArrayList<>(Objects.requireNonNull(footer, "footer"));
             return this;
+        }
+
+        public Builder footer(String... footer) {
+            if (footer == null) {
+                this.footer = new ArrayList<>();
+            } else {
+                this.footer = new ArrayList<>(List.of(footer));
+            }
+            return this;
+        }
+
+        public Builder addFooter(String... lines) {
+            if (lines != null) {
+                for (String line : lines) {
+                    if (line != null) {
+                        this.footer.add(line);
+                    }
+                }
+            }
+            return this;
+        }
+
+        /**
+         * Loads configuration settings from a {@link ConfigurationSection}.
+         */
+        public Builder load(@Nullable ConfigurationSection section) {
+            if (section == null) {
+                return this;
+            }
+            if (section.isBoolean("enabled")) {
+                this.enabled = section.getBoolean("enabled");
+            }
+            String modeStr = getString(section, "mode");
+            if (modeStr != null) {
+                this.mode = ContentLoreMode.fromString(modeStr, this.mode);
+            }
+            List<String> headerList = getStringListOrSingle(section, "header", "headers");
+            if (headerList != null) {
+                this.header = new ArrayList<>(headerList);
+            }
+            List<String> footerList = getStringListOrSingle(section, "footer", "footers");
+            if (footerList != null) {
+                this.footer = new ArrayList<>(footerList);
+            }
+            String emptySlotVal = getString(section, "empty-slot", "empty_slot", "emptySlot");
+            if (emptySlotVal != null) {
+                this.emptySlot = emptySlotVal;
+            }
+            String separatorVal = getString(section, "separator");
+            if (separatorVal != null) {
+                this.separator = separatorVal;
+            }
+            String emptyMsgVal = getString(section, "empty-message", "empty_message", "emptyMessage");
+            if (emptyMsgVal != null) {
+                this.emptyMessage = emptyMsgVal;
+            }
+            Integer maxLinesVal = getInt(section, "max-lines", "max_lines", "maxLines");
+            if (maxLinesVal != null) {
+                this.maxLines = maxLinesVal;
+            }
+            String contentLineVal = getString(section, "content-line", "content_line", "contentLine");
+            if (contentLineVal != null) {
+                this.contentLine = contentLineVal;
+            }
+            return this;
+        }
+
+        /**
+         * Loads configuration settings from a {@link Map}.
+         */
+        public Builder load(@Nullable Map<String, ?> map) {
+            if (map == null) {
+                return this;
+            }
+            Object enabledVal = map.get("enabled");
+            if (enabledVal instanceof Boolean b) {
+                this.enabled = b;
+            } else if (enabledVal instanceof String s) {
+                this.enabled = Boolean.parseBoolean(s);
+            }
+            String modeStr = getMapString(map, "mode");
+            if (modeStr != null) {
+                this.mode = ContentLoreMode.fromString(modeStr, this.mode);
+            }
+            List<String> headerList = getMapStringListOrSingle(map, "header", "headers");
+            if (headerList != null) {
+                this.header = new ArrayList<>(headerList);
+            }
+            List<String> footerList = getMapStringListOrSingle(map, "footer", "footers");
+            if (footerList != null) {
+                this.footer = new ArrayList<>(footerList);
+            }
+            String emptySlotVal = getMapString(map, "empty-slot", "empty_slot", "emptySlot");
+            if (emptySlotVal != null) {
+                this.emptySlot = emptySlotVal;
+            }
+            String separatorVal = getMapString(map, "separator");
+            if (separatorVal != null) {
+                this.separator = separatorVal;
+            }
+            String emptyMsgVal = getMapString(map, "empty-message", "empty_message", "emptyMessage");
+            if (emptyMsgVal != null) {
+                this.emptyMessage = emptyMsgVal;
+            }
+            Integer maxLinesVal = getMapInt(map, "max-lines", "max_lines", "maxLines");
+            if (maxLinesVal != null) {
+                this.maxLines = maxLinesVal;
+            }
+            String contentLineVal = getMapString(map, "content-line", "content_line", "contentLine");
+            if (contentLineVal != null) {
+                this.contentLine = contentLineVal;
+            }
+            return this;
+        }
+
+        private static @Nullable String getString(ConfigurationSection section, String... keys) {
+            for (String key : keys) {
+                if (section.isString(key)) {
+                    return section.getString(key);
+                }
+            }
+            return null;
+        }
+
+        private static @Nullable Integer getInt(ConfigurationSection section, String... keys) {
+            for (String key : keys) {
+                if (section.isInt(key)) {
+                    return section.getInt(key);
+                }
+            }
+            return null;
+        }
+
+        private static @Nullable List<String> getStringListOrSingle(ConfigurationSection section, String... keys) {
+            for (String key : keys) {
+                if (section.isList(key)) {
+                    return section.getStringList(key);
+                } else if (section.isString(key)) {
+                    return List.of(section.getString(key));
+                }
+            }
+            return null;
+        }
+
+        private static @Nullable String getMapString(Map<String, ?> map, String... keys) {
+            for (String key : keys) {
+                Object val = map.get(key);
+                if (val != null) {
+                    return val.toString();
+                }
+            }
+            return null;
+        }
+
+        private static @Nullable Integer getMapInt(Map<String, ?> map, String... keys) {
+            for (String key : keys) {
+                Object val = map.get(key);
+                if (val instanceof Number n) {
+                    return n.intValue();
+                } else if (val instanceof String s) {
+                    try {
+                        return Integer.parseInt(s);
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static @Nullable List<String> getMapStringListOrSingle(Map<String, ?> map, String... keys) {
+            for (String key : keys) {
+                Object val = map.get(key);
+                if (val instanceof List<?> list) {
+                    List<String> res = new ArrayList<>();
+                    for (Object elem : list) {
+                        if (elem != null) {
+                            res.add(elem.toString());
+                        }
+                    }
+                    return res;
+                } else if (val instanceof String s) {
+                    return List.of(s);
+                }
+            }
+            return null;
         }
 
         /**

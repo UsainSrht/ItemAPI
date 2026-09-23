@@ -1,6 +1,6 @@
 package me.usainsrht.itemapi.itemtext;
 
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Enum representing the display mode for container content lore preview.
@@ -11,15 +11,24 @@ public enum ContentLoreMode {
 
     /**
      * Parses a raw string into a {@link ContentLoreMode}. Accepts case-insensitive values like
-     * "TOTAL_STACK", "total-stack", "GUI_VIEW", "gui-view". Returns {@link #TOTAL_STACK} for unknown inputs.
+     * "TOTAL_STACK", "total-stack", "GUI_VIEW", "gui-view". Returns {@link #TOTAL_STACK} for unknown or null inputs.
      */
-    @NotNull
-    public static ContentLoreMode fromString(@NotNull String raw) {
+    public static ContentLoreMode fromString(@Nullable String raw) {
+        return fromString(raw, TOTAL_STACK);
+    }
+
+    /**
+     * Parses a raw string into a {@link ContentLoreMode}, or returns {@code fallback} if invalid or null.
+     */
+    public static ContentLoreMode fromString(@Nullable String raw, ContentLoreMode fallback) {
+        if (raw == null || raw.isBlank()) {
+            return fallback;
+        }
         String normalized = raw.trim().toUpperCase().replace('-', '_');
         try {
             return ContentLoreMode.valueOf(normalized);
         } catch (IllegalArgumentException e) {
-            return TOTAL_STACK;
+            return fallback;
         }
     }
 }

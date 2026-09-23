@@ -64,7 +64,50 @@ ItemText.setDefaultOptions(builder -> builder
         .displayCustomNameIfHasColor(true) // show custom name only if colored, otherwise translatable
         .amountDisplay(AmountDisplay.SUBSCRIPT)
         .removeItalic(true)
+        .containerShowAsBundle(true) // show containers as bundle in hover tooltips
+        .contentLore(lore -> lore
+                .mode(ContentLoreMode.TOTAL_STACK) // or ContentLoreMode.GUI_VIEW
+                .maxLines(18)
+        )
 );
+
+// 4. Container Lore and Bundle APIs
+ItemStack bundlePreview = ItemText.toBundle(shulkerBox); // Convert container to virtual bundle ItemStack
+List<Component> loreLines = ItemText.containerLore(containerItem); // Render container content lore lines
+ItemStack itemWithLore = ItemText.applyContainerLore(containerItem); // Clone and apply container lore directly
+
+// 5. Load settings directly from Bukkit Configuration (config.yml)
+ItemTextOptions fromConfig = ItemTextOptions.fromConfig(config.getConfigurationSection("itemtext"));
+ContentLoreOptions loreFromConfig = ContentLoreOptions.fromConfig(config.getConfigurationSection("container-lore"));
+ItemText.setDefaultOptions(fromConfig);
+```
+
+#### Container Lore & Bundle YAML Configuration (`config.yml`)
+
+Plugins can expose full configuration for `itemtext` and `container-lore` in their `config.yml`:
+
+```yaml
+itemtext:
+  brackets: false
+  custom-name: true
+  custom-name-if-has-color: false
+  italic: false
+  amount-display: subscript # subscript, superscript, normal
+  pattern: "<item_sprite><subscript_number> <item_displayname>"
+  shadow: false
+  hover: true
+  container-show-as-bundle: true
+  container-lore:
+    enabled: true
+    mode: total_stack # total_stack or gui_view
+    header:
+      - " <white><!italic><translate_or:entity.minecraft.sulfur_cube.content:'%s':'<item>'>"
+    footer: []
+    empty-slot: "<sprite:gui:container/slot>"
+    separator: ""
+    empty-message: " <white><!italic><translate:item.minecraft.bundle.empty> "
+    max-lines: 27
+    content-line: "  <white><!italic><content> "
 ```
 
 ---
