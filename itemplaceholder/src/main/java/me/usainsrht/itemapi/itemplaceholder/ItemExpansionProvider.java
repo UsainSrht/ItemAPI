@@ -25,6 +25,7 @@ import org.bukkit.inventory.ItemStack;
  * <ul>
  *   <li>{@code brackets} / {@code no_brackets}</li>
  *   <li>{@code custom_name} / {@code no_custom_name} ({@code translate})</li>
+ *   <li>{@code custom_name_if_has_color} / {@code display_custom_name_if_has_color} / {@code no_custom_name_if_has_color}</li>
  *   <li>{@code italic} / {@code no_italic}</li>
  *   <li>{@code superscript} / {@code subscript} / {@code normal_amount}</li>
  *   <li>{@code amount:<int>} — override displayed amount (any int; negative/zero allowed)</li>
@@ -76,6 +77,8 @@ public final class ItemExpansionProvider implements ExpansionProvider {
                 case "no_brackets" -> builder.displayBrackets(false);
                 case "no_custom_name", "translate" -> builder.displayCustomName(false);
                 case "custom_name" -> builder.displayCustomName(true);
+                case "custom_name_if_has_color", "display_custom_name_if_has_color", "display-custom-name-if-has-color" -> builder.displayCustomNameIfHasColor(true);
+                case "no_custom_name_if_has_color", "no_display_custom_name_if_has_color", "no-display-custom-name-if-has-color" -> builder.displayCustomNameIfHasColor(false);
                 case "italic" -> builder.removeItalic(false);
                 case "no_italic" -> builder.removeItalic(true);
                 case "superscript", "super" -> builder.amountDisplay(AmountDisplay.SUPERSCRIPT);

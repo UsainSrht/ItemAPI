@@ -60,6 +60,8 @@ Component customComponent = ItemText.format(itemStack, options);
 // 3. Configure global default options for your plugin
 ItemText.setDefaultOptions(builder -> builder
         .displayBrackets(false)
+        .displayCustomName(false)
+        .displayCustomNameIfHasColor(true) // show custom name only if colored, otherwise translatable
         .amountDisplay(AmountDisplay.SUBSCRIPT)
         .removeItalic(true)
 );
@@ -149,6 +151,7 @@ MiniPlaceholders v3 expansion provider exposing `<item_hand:...>` and `<item_off
 
 - `brackets` / `no_brackets`: Wrap formatted output in `[...]`
 - `custom_name` / `no_custom_name` (`translate`): Control display name fallback
+- `custom_name_if_has_color` (`display_custom_name_if_has_color`): When `custom_name` is disabled, display custom name only if colored
 - `italic` / `no_italic`: Control italic text removal
 - `superscript` (`super`) / `subscript` (`sub`) / `normal_amount` (`normal`): Amount style
 - `show_one` (`force_amount`): Show amount even when stack size is 1

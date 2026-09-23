@@ -23,6 +23,7 @@ public final class ItemTextOptions {
 
     private final boolean displayBrackets;
     private final boolean displayCustomName;
+    private final boolean displayCustomNameIfHasColor;
     private final boolean removeItalic;
     private final AmountDisplay amountDisplay;
     private final @Nullable Integer amount;
@@ -40,6 +41,7 @@ public final class ItemTextOptions {
     private ItemTextOptions(Builder builder) {
         this.displayBrackets = builder.displayBrackets;
         this.displayCustomName = builder.displayCustomName;
+        this.displayCustomNameIfHasColor = builder.displayCustomNameIfHasColor;
         this.removeItalic = builder.removeItalic;
         this.amountDisplay = builder.amountDisplay;
         this.amount = builder.amount;
@@ -69,6 +71,10 @@ public final class ItemTextOptions {
 
     public boolean displayCustomName() {
         return displayCustomName;
+    }
+
+    public boolean displayCustomNameIfHasColor() {
+        return displayCustomNameIfHasColor;
     }
 
     public boolean removeItalic() {
@@ -147,6 +153,7 @@ public final class ItemTextOptions {
         return new Builder()
                 .displayBrackets(displayBrackets)
                 .displayCustomName(displayCustomName)
+                .displayCustomNameIfHasColor(displayCustomNameIfHasColor)
                 .removeItalic(removeItalic)
                 .amountDisplay(amountDisplay)
                 .amount(amount)
@@ -166,6 +173,7 @@ public final class ItemTextOptions {
 
         private boolean displayBrackets = false;
         private boolean displayCustomName = true;
+        private boolean displayCustomNameIfHasColor = false;
         private boolean removeItalic = true;
         private AmountDisplay amountDisplay = AmountDisplay.SUBSCRIPT;
         private @Nullable Integer amount = null;
@@ -187,6 +195,11 @@ public final class ItemTextOptions {
 
         public Builder displayCustomName(boolean displayCustomName) {
             this.displayCustomName = displayCustomName;
+            return this;
+        }
+
+        public Builder displayCustomNameIfHasColor(boolean displayCustomNameIfHasColor) {
+            this.displayCustomNameIfHasColor = displayCustomNameIfHasColor;
             return this;
         }
 

@@ -15,6 +15,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
+import org.jspecify.annotations.Nullable;
 
 
 import java.util.List;
@@ -168,6 +169,11 @@ public final class ItemText {
         Component name = null;
         if (options.displayCustomName()) {
             name = item.getData(DataComponentTypes.CUSTOM_NAME);
+        } else if (options.displayCustomNameIfHasColor()) {
+            Component customName = item.getData(DataComponentTypes.CUSTOM_NAME);
+            if (customName != null && hasColor(customName)) {
+                name = customName;
+            }
         }
         if (name == null) {
             Component itemName = item.getData(DataComponentTypes.ITEM_NAME);
@@ -186,6 +192,21 @@ public final class ItemText {
             name = name.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
         }
         return name;
+    }
+
+    private static boolean hasColor(@Nullable Component component) {
+        if (component == null) {
+            return false;
+        }
+        if (component.color() != null) {
+            return true;
+        }
+        for (Component child : component.children()) {
+            if (hasColor(child)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static ItemRarity getItemRarity(ItemStack item) {
