@@ -18,7 +18,7 @@ final class ItemSpriteOverrides {
     private static final Key BLOCKS_ATLAS = SpriteObjectContents.DEFAULT_ATLAS;
     private static final Key MAP_DECORATIONS_ATLAS = Key.key("minecraft", "map_decorations");
     private static final Key DECORATED_POT_ATLAS = Key.key("minecraft", "decorated_pot");
-    private static final Key MOB_EFFECTS_ATLAS = Key.key("minecraft", "mob_effects");
+    private static final Key MOB_EFFECTS_ATLAS = Key.key("minecraft", "gui"); // mob effects atlas is gui
 
     private static final Map<String, SpriteRef> BY_ITEM = build();
 
@@ -60,7 +60,16 @@ final class ItemSpriteOverrides {
         putBlock(map, "waxed_weathered_copper_chest", "weathered_copper");
         putBlock(map, "waxed_oxidized_copper_chest", "oxidized_copper");
 
-        // Copper golem statues (3D)
+        // Copper golems & statues (3D)
+        putBlock(map, "copper_golem", "copper_block");
+        putBlock(map, "exposed_copper_golem", "exposed_copper");
+        putBlock(map, "weathered_copper_golem", "weathered_copper");
+        putBlock(map, "oxidized_copper_golem", "oxidized_copper");
+        putBlock(map, "waxed_copper_golem", "copper_block");
+        putBlock(map, "waxed_exposed_copper_golem", "exposed_copper");
+        putBlock(map, "waxed_weathered_copper_golem", "weathered_copper");
+        putBlock(map, "waxed_oxidized_copper_golem", "oxidized_copper");
+
         putBlock(map, "copper_golem_statue", "copper_block");
         putBlock(map, "exposed_copper_golem_statue", "exposed_copper");
         putBlock(map, "weathered_copper_golem_statue", "weathered_copper");
@@ -167,7 +176,7 @@ final class ItemSpriteOverrides {
     }
 
     private static String[] colors() {
-        return new String[]{
+        return new String[] {
                 "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
                 "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"
         };
