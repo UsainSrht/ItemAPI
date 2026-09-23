@@ -18,6 +18,7 @@ final class ItemSpriteOverrides {
     private static final Key BLOCKS_ATLAS = SpriteObjectContents.DEFAULT_ATLAS;
     private static final Key MAP_DECORATIONS_ATLAS = Key.key("minecraft", "map_decorations");
     private static final Key DECORATED_POT_ATLAS = Key.key("minecraft", "decorated_pot");
+    private static final Key MOB_EFFECTS_ATLAS = Key.key("minecraft", "mob_effects");
 
     private static final Map<String, SpriteRef> BY_ITEM = build();
 
@@ -83,8 +84,8 @@ final class ItemSpriteOverrides {
         putBlock(map, "piglin_head", "orange_terracotta");
         // player_head uses ObjectContents.playerHead when a profile is present
 
-        // Shield pattern atlas base is blank in text; use a recognizable wood face
-        putBlock(map, "shield", "oak_planks");
+        // Shield: entity model — use mob effect resistance sprite
+        put(map, "shield", MOB_EFFECTS_ATLAS, "mob_effect/resistance");
 
         // Other entity / multi-texture holdables
         put(map, "decorated_pot", DECORATED_POT_ATLAS, "entity/decorated_pot/decorated_pot_side");

@@ -133,7 +133,7 @@ public final class ContentLoreOptions {
         private boolean enabled = true;
         private ContentLoreMode mode = ContentLoreMode.TOTAL_STACK;
         private List<String> header = List
-                .of(" <white><!italic><translate:entity.minecraft.sulfur_cube.content:'<item>'>");
+                .of(" <white><!italic><translate_or:entity.minecraft.sulfur_cube.content:'%s':'<item>'>");
         private List<String> footer = List.of();
         /** {@code null} = inherit from parent ItemTextOptions at render time. */
         private @Nullable ItemTextOptions content = null;

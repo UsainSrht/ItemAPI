@@ -18,6 +18,14 @@ class HeadSpriteTest {
             "chest",
             "trapped_chest",
             "ender_chest",
+            "copper_chest",
+            "exposed_copper_chest",
+            "weathered_copper_chest",
+            "oxidized_copper_chest",
+            "waxed_copper_chest",
+            "waxed_exposed_copper_chest",
+            "waxed_weathered_copper_chest",
+            "waxed_oxidized_copper_chest",
             "heavy_core",
             "dragon_head",
             "skeleton_skull",
@@ -79,6 +87,10 @@ class HeadSpriteTest {
         ItemStack heavyCore = stubItem(Material.HEAVY_CORE);
         Component coreSprite = ItemSpriteFactory.create(heavyCore, offlineOptions);
         assertEquals("{\"sprite\":\"minecraft:block/heavy_core\"}", GsonComponentSerializer.gson().serialize(coreSprite));
+
+        ItemStack copperChest = stubItem(Material.COPPER_CHEST);
+        Component copperChestSprite = ItemSpriteFactory.create(copperChest, offlineOptions);
+        assertEquals("{\"sprite\":\"minecraft:block/copper_block\"}", GsonComponentSerializer.gson().serialize(copperChestSprite));
     }
 
     @Test
@@ -87,6 +99,14 @@ class HeadSpriteTest {
                 Material.CHEST,
                 Material.TRAPPED_CHEST,
                 Material.ENDER_CHEST,
+                Material.COPPER_CHEST,
+                Material.EXPOSED_COPPER_CHEST,
+                Material.WEATHERED_COPPER_CHEST,
+                Material.OXIDIZED_COPPER_CHEST,
+                Material.WAXED_COPPER_CHEST,
+                Material.WAXED_EXPOSED_COPPER_CHEST,
+                Material.WAXED_WEATHERED_COPPER_CHEST,
+                Material.WAXED_OXIDIZED_COPPER_CHEST,
                 Material.HEAVY_CORE,
                 Material.DRAGON_HEAD,
                 Material.SKELETON_SKULL,
@@ -104,6 +124,14 @@ class HeadSpriteTest {
             assertTrue(serialized.contains("\"hat\":true"), "Hat must be true for " + mat);
             assertTrue(serialized.contains("\"properties\":[{\"name\":\"textures\""), "Textures property must exist for " + mat);
         }
+    }
+
+    @Test
+    void testShieldSprite() {
+        ItemStack shield = stubItem(Material.SHIELD);
+        Component sprite = ItemSpriteFactory.create(shield, ItemTextOptions.defaults());
+        String serialized = GsonComponentSerializer.gson().serialize(sprite);
+        assertEquals("{\"atlas\":\"minecraft:mob_effects\",\"sprite\":\"minecraft:mob_effect/resistance\"}", serialized);
     }
 
     private ItemStack stubItem(Material material) {
