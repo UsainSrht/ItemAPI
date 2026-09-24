@@ -146,12 +146,15 @@ public final class ContentLoreOptions {
      * <p>
      * If an explicit static {@link #content()} is present, it is used as the base.
      * Otherwise {@code parentOptions} is used with hover and content-lore disabled
-     * to prevent recursion, and {@code removeItalic} set to {@code false} by default
+     * to prevent recursion, and {@code removeItalic} set to {@code false} by
+     * default
      * for container content preview.
      * </p>
      * <p>
-     * If a {@code contentModifier} is present (e.g. from {@link Builder#content(UnaryOperator)}
-     * or a {@code content} section in YAML/Map), it is applied to override only the explicitly
+     * If a {@code contentModifier} is present (e.g. from
+     * {@link Builder#content(UnaryOperator)}
+     * or a {@code content} section in YAML/Map), it is applied to override only the
+     * explicitly
      * specified values, leaving all other settings inherited from the parent.
      * </p>
      */
@@ -163,7 +166,9 @@ public final class ContentLoreOptions {
             builder = parentOptions.toBuilder()
                     .hoverEnabled(false)
                     .contentLoreEnabled(false)
-                    .removeItalic(false);
+                    .removeItalic(false)
+                    .displayCustomName(false)
+                    .displayCustomNameIfHasColor(true);
         }
         if (contentModifier != null) {
             builder = contentModifier.apply(builder);
@@ -442,7 +447,8 @@ public final class ContentLoreOptions {
         }
 
         /**
-         * Sets explicit static content options. Pass {@code null} to inherit from parent.
+         * Sets explicit static content options. Pass {@code null} to inherit from
+         * parent.
          */
         public Builder content(@Nullable ItemTextOptions content) {
             this.content = content;
@@ -460,7 +466,8 @@ public final class ContentLoreOptions {
 
         /**
          * Configures content options using a builder configurator.
-         * Only the values modified by the configurator will override the parent options;
+         * Only the values modified by the configurator will override the parent
+         * options;
          * all other values fall back to the parent {@link ItemTextOptions}.
          */
         public Builder content(@Nullable UnaryOperator<ItemTextOptions.Builder> configurator) {
