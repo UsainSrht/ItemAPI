@@ -4,6 +4,7 @@ import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemContainerContents;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -122,8 +123,7 @@ class ContainerLoreApiTest {
                 "separator", ",",
                 "empty_message", "empty box",
                 "max_lines", 12,
-                "content_line", "- <content>"
-        );
+                "content_line", "- <content>");
         ContentLoreOptions options = ContentLoreOptions.fromMap(map);
 
         assertFalse(options.enabled());
@@ -241,8 +241,7 @@ class ContainerLoreApiTest {
     void testItemTextOptionsFromMapWithBooleanContainerLore() {
         Map<String, Object> map = Map.of(
                 "container_show_as_bundle", false,
-                "container_lore", false
-        );
+                "container_lore", false);
         ItemTextOptions options = ItemTextOptions.fromMap(map);
 
         assertFalse(options.containerShowAsBundle());
@@ -354,6 +353,204 @@ class ContainerLoreApiTest {
         assertEquals(10, ItemText.defaultOptions().contentLore().maxLines());
     }
 
+    @Test
+    void testResolveContentRemoveItalicFalseByDefault() {
+        ContentLoreOptions options = ContentLoreOptions.defaults();
+        ItemTextOptions parent = ItemTextOptions.builder().removeItalic(true).build();
+        assertTrue(parent.removeItalic());
+
+        ItemTextOptions resolved = options.resolveContent(parent);
+        assertFalse(resolved.removeItalic(), "container lore total stack must resolve removeItalic to false by default");
+        assertFalse(resolved.hoverEnabled());
+        assertFalse(resolved.contentLore().enabled());
+    }
+
+    @Test
+    void testResolveContentWithExplicitContent() {
+        ContentLoreOptions options = ContentLoreOptions.builder()
+                .content(c -> c.removeItalic(true).hoverEnabled(true))
+                .build();
+        assertNotNull(options.content());
+        assertTrue(options.content().removeItalic());
+
+        ItemTextOptions parent = ItemTextOptions.builder().removeItalic(false).build();
+        ItemTextOptions resolved = options.resolveContent(parent);
+        assertTrue(resolved.removeItalic());
+        assertTrue(resolved.hoverEnabled());
+    }
+
+    @Test
+    void testContainerLoreTotalStackRemoveItalicFalseByDefault() {
+        ItemStack diamond = stubItem(Material.DIAMOND);
+        ItemStack chest = stubContainer(Material.CHEST, List.of(diamond));
+
+        ContentLoreOptions options = ContentLoreOptions.builder()
+                .header(List.of())
+                .footer(List.of())
+                .contentLine("<content>")
+                .build();
+
+        ItemTextOptions parent = ItemTextOptions.builder()
+                .pattern("<item_displayname>")
+                .removeItalic(true)
+                .build();
+
+        List<Component> lines = ContainerLore.render(chest, options, parent);
+        assertFalse(lines.isEmpty());
+        Component line = lines.getFirst();
+        assertFalse(hasItalicFalse(line), "Inner item should not have TextDecoration.ITALIC = FALSE by default");
+    }
+
+    @Test
+    void testContainerLoreTotalStackRemoveItalicTrueWhenConfigured() {
+        ItemStack diamond = stubItem(Material.DIAMOND);
+        ItemStack chest = stubContainer(Material.CHEST, List.of(diamond));
+
+        ContentLoreOptions options = ContentLoreOptions.builder()
+                .header(List.of())
+                .footer(List.of())
+                .contentLine("<content>")
+                .content(c -> c.removeItalic(true))
+                .build();
+
+        ItemTextOptions parent = ItemTextOptions.builder()
+                .pattern("<item_displayname>")
+                .build();
+
+        List<Component> lines = ContainerLore.render(chest, options, parent);
+        assertFalse(lines.isEmpty());
+        Component line = lines.getFirst();
+        assertTrue(hasItalicFalse(line), "Inner item should have TextDecoration.ITALIC = FALSE when configured");
+    }
+
+    private static boolean hasItalicFalse(Component component) {
+        if (component.decoration(TextDecoration.ITALIC) == TextDecoration.State.FALSE) {
+            return true;
+        }
+        for (Component child : component.children()) {
+            if (hasItalicFalse(child)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Test
+    void testContentLoreOptionsContentFromConfig() throws Exception {
+        String yaml = """
+                content:
+                  remove-italic: false
+                  brackets: true
+                """;
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(new StringReader(yaml));
+        ContentLoreOptions options = ContentLoreOptions.fromConfig(config);
+        assertNotNull(options.content());
+        assertFalse(options.content().removeItalic());
+        assertTrue(options.content().displayBrackets());
+    }
+
+    @Test
+    void testContentLoreOptionsContentFromMap() {
+        Map<String, Object> map = Map.of(
+                "content", Map.of(
+                        "remove_italic", false,
+                        "brackets", true
+                )
+        );
+        ContentLoreOptions options = ContentLoreOptions.fromMap(map);
+        assertNotNull(options.content());
+        assertFalse(options.content().removeItalic());
+        assertTrue(options.content().displayBrackets());
+    }
+
+    @Test
+    void testContentLorePartialOverrideFromConfig() throws Exception {
+        String yaml = """
+                content:
+                  remove-italic: false
+                  brackets: true
+                """;
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(new StringReader(yaml));
+        ContentLoreOptions options = ContentLoreOptions.fromConfig(config);
+
+        ItemTextOptions parent = ItemTextOptions.builder()
+                .displayBrackets(false)
+                .pattern("<item_sprite> <item_displayname>")
+                .shadowEnabled(true)
+                .displayCustomNameIfHasColor(true)
+                .removeItalic(true)
+                .build();
+
+        ItemTextOptions resolved = options.resolveContent(parent);
+
+        // Explicitly overridden in content:
+        assertFalse(resolved.removeItalic());
+        assertTrue(resolved.displayBrackets());
+
+        // Fallbacks inherited from parent:
+        assertEquals("<item_sprite> <item_displayname>", resolved.pattern());
+        assertTrue(resolved.shadowEnabled());
+        assertTrue(resolved.displayCustomNameIfHasColor());
+        assertFalse(resolved.hoverEnabled());
+        assertFalse(resolved.contentLore().enabled());
+    }
+
+    @Test
+    void testContentLorePartialOverrideFromCodeConfigurator() {
+        ContentLoreOptions options = ContentLoreOptions.builder()
+                .content(c -> c.removeItalic(false).displayBrackets(true))
+                .build();
+
+        ItemTextOptions parent = ItemTextOptions.builder()
+                .displayBrackets(false)
+                .pattern("<item_sprite> <item_displayname>")
+                .shadowEnabled(true)
+                .displayCustomNameIfHasColor(true)
+                .removeItalic(true)
+                .build();
+
+        ItemTextOptions resolved = options.resolveContent(parent);
+
+        // Explicitly overridden via configurator:
+        assertFalse(resolved.removeItalic());
+        assertTrue(resolved.displayBrackets());
+
+        // Fallbacks inherited from parent:
+        assertEquals("<item_sprite> <item_displayname>", resolved.pattern());
+        assertTrue(resolved.shadowEnabled());
+        assertTrue(resolved.displayCustomNameIfHasColor());
+        assertFalse(resolved.hoverEnabled());
+        assertFalse(resolved.contentLore().enabled());
+    }
+
+    @Test
+    void testContentLorePartialOverrideFromMap() {
+        Map<String, Object> map = Map.of(
+                "content", Map.of(
+                        "remove_italic", false,
+                        "brackets", true
+                )
+        );
+        ContentLoreOptions options = ContentLoreOptions.fromMap(map);
+
+        ItemTextOptions parent = ItemTextOptions.builder()
+                .displayBrackets(false)
+                .pattern("<item_sprite> <item_displayname>")
+                .shadowEnabled(true)
+                .removeItalic(true)
+                .build();
+
+        ItemTextOptions resolved = options.resolveContent(parent);
+
+        // Explicitly overridden in map:
+        assertFalse(resolved.removeItalic());
+        assertTrue(resolved.displayBrackets());
+
+        // Fallbacks inherited from parent:
+        assertEquals("<item_sprite> <item_displayname>", resolved.pattern());
+        assertTrue(resolved.shadowEnabled());
+    }
+
     private static ItemStack stubItem(Material material) {
         return new ItemStack() {
             private List<Component> lore = new ArrayList<>();
@@ -361,6 +558,21 @@ class ContainerLoreApiTest {
             @Override
             public Material getType() {
                 return material;
+            }
+
+            @Override
+            public boolean isSimilar(@Nullable ItemStack stack) {
+                return stack != null && stack.getType() == material;
+            }
+
+            @Override
+            public int hashCode() {
+                return material.hashCode();
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                return obj instanceof ItemStack other && other.getType() == material;
             }
 
             @Override

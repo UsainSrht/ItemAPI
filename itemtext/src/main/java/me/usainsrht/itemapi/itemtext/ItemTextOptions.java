@@ -69,7 +69,8 @@ public final class ItemTextOptions {
     }
 
     /**
-     * Parses {@link ItemTextOptions} from a {@link ConfigurationSection}, or returns {@link #defaults()} if {@code section} is null.
+     * Parses {@link ItemTextOptions} from a {@link ConfigurationSection}, or
+     * returns {@link #defaults()} if {@code section} is null.
      */
     public static ItemTextOptions fromConfig(@Nullable ConfigurationSection section) {
         if (section == null) {
@@ -79,7 +80,8 @@ public final class ItemTextOptions {
     }
 
     /**
-     * Parses {@link ItemTextOptions} from a {@link Map}, or returns {@link #defaults()} if {@code map} is null.
+     * Parses {@link ItemTextOptions} from a {@link Map}, or returns
+     * {@link #defaults()} if {@code map} is null.
      */
     public static ItemTextOptions fromMap(@Nullable Map<String, ?> map) {
         if (map == null) {
@@ -109,7 +111,8 @@ public final class ItemTextOptions {
     }
 
     /**
-     * Display amount override. When {@code null}, {@link org.bukkit.inventory.ItemStack#getAmount()} is used.
+     * Display amount override. When {@code null},
+     * {@link org.bukkit.inventory.ItemStack#getAmount()} is used.
      * Any {@code int} value is accepted (negative, zero, or above max stack size).
      */
     public @Nullable Integer amount() {
@@ -148,10 +151,14 @@ public final class ItemTextOptions {
     }
 
     /**
-     * When {@code true} (the default), items that carry a {@code container} data component
-     * (e.g. shulker boxes, chests-as-items with NBT) are displayed with a bundle sprite whose
-     * contents mirror the container tag. All other item data and the display name are kept from
-     * the original item; if the original has no custom name or item-name override the sprite uses
+     * When {@code true} (the default), items that carry a {@code container} data
+     * component
+     * (e.g. shulker boxes, chests-as-items with NBT) are displayed with a bundle
+     * sprite whose
+     * contents mirror the container tag. All other item data and the display name
+     * are kept from
+     * the original item; if the original has no custom name or item-name override
+     * the sprite uses
      * the original item's own translation key rather than the bundle's.
      */
     public boolean containerShowAsBundle() {
@@ -159,9 +166,12 @@ public final class ItemTextOptions {
     }
 
     /**
-     * When {@code true} (the default), items and blocks with 3D or entity models (such as
-     * chests, mob heads, and heavy core) are rendered using 2D player head font glyphs with
-     * curated, asynchronous client-cached skin textures. When {@code false}, they fall back
+     * When {@code true} (the default), items and blocks with 3D or entity models
+     * (such as
+     * chests, mob heads, and heavy core) are rendered using 2D player head font
+     * glyphs with
+     * curated, asynchronous client-cached skin textures. When {@code false}, they
+     * fall back
      * to standard block/item atlas sprites.
      */
     public boolean usePlayerHeadsFor3DBlocks() {
@@ -237,7 +247,8 @@ public final class ItemTextOptions {
         }
 
         /**
-         * Sets the displayed amount, overriding {@link org.bukkit.inventory.ItemStack#getAmount()}.
+         * Sets the displayed amount, overriding
+         * {@link org.bukkit.inventory.ItemStack#getAmount()}.
          * Pass {@code null} to use the stack size again.
          */
         public Builder amount(@Nullable Integer amount) {
@@ -379,18 +390,26 @@ public final class ItemTextOptions {
             return this;
         }
 
+        public Builder contentLoreContent(UnaryOperator<ItemTextOptions.Builder> configurator) {
+            this.contentLore = this.contentLore.toBuilder().content(configurator).build();
+            return this;
+        }
+
         /**
-         * Loads only container-related settings (show-as-bundle and container-lore) from a {@link ConfigurationSection}.
+         * Loads only container-related settings (show-as-bundle and container-lore)
+         * from a {@link ConfigurationSection}.
          */
         public Builder loadContainerSettings(@Nullable ConfigurationSection section) {
             if (section == null) {
                 return this;
             }
-            Boolean bundleVal = getBoolean(section, "container-show-as-bundle", "container_show_as_bundle", "containerShowAsBundle", "show-as-bundle", "bundle");
+            Boolean bundleVal = getBoolean(section, "container-show-as-bundle", "container_show_as_bundle",
+                    "containerShowAsBundle", "show-as-bundle", "bundle");
             if (bundleVal != null) {
                 this.containerShowAsBundle = bundleVal;
             }
-            for (String key : new String[]{"container-lore", "container_lore", "containerLore", "content-lore", "content_lore", "contentLore"}) {
+            for (String key : new String[] { "container-lore", "container_lore", "containerLore", "content-lore",
+                    "content_lore", "contentLore" }) {
                 if (section.isConfigurationSection(key)) {
                     this.contentLore = this.contentLore.toBuilder().load(section.getConfigurationSection(key)).build();
                     break;
@@ -403,17 +422,20 @@ public final class ItemTextOptions {
         }
 
         /**
-         * Loads only container-related settings (show-as-bundle and container-lore) from a {@link Map}.
+         * Loads only container-related settings (show-as-bundle and container-lore)
+         * from a {@link Map}.
          */
         public Builder loadContainerSettings(@Nullable Map<String, ?> map) {
             if (map == null) {
                 return this;
             }
-            Boolean bundleVal = getMapBoolean(map, "container-show-as-bundle", "container_show_as_bundle", "containerShowAsBundle", "show-as-bundle", "bundle");
+            Boolean bundleVal = getMapBoolean(map, "container-show-as-bundle", "container_show_as_bundle",
+                    "containerShowAsBundle", "show-as-bundle", "bundle");
             if (bundleVal != null) {
                 this.containerShowAsBundle = bundleVal;
             }
-            for (String key : new String[]{"container-lore", "container_lore", "containerLore", "content-lore", "content_lore", "contentLore"}) {
+            for (String key : new String[] { "container-lore", "container_lore", "containerLore", "content-lore",
+                    "content_lore", "contentLore" }) {
                 Object val = map.get(key);
                 if (val instanceof Map<?, ?> m) {
                     @SuppressWarnings("unchecked")
@@ -440,17 +462,21 @@ public final class ItemTextOptions {
             }
             loadContainerSettings(section);
 
-            Boolean brackets = getBoolean(section, "brackets", "display-brackets", "display_brackets", "displayBrackets");
+            Boolean brackets = getBoolean(section, "brackets", "display-brackets", "display_brackets",
+                    "displayBrackets");
             if (brackets != null) {
                 this.displayBrackets = brackets;
             }
 
-            Boolean customName = getBoolean(section, "custom-name", "custom_name", "display-custom-name", "display_custom_name", "displayCustomName");
+            Boolean customName = getBoolean(section, "custom-name", "custom_name", "display-custom-name",
+                    "display_custom_name", "displayCustomName");
             if (customName != null) {
                 this.displayCustomName = customName;
             }
 
-            Boolean customNameColored = getBoolean(section, "custom-name-if-has-color", "custom_name_if_has_color", "display-custom-name-if-has-color", "display_custom_name_if_has_color", "displayCustomNameIfHasColor");
+            Boolean customNameColored = getBoolean(section, "custom-name-if-has-color", "custom_name_if_has_color",
+                    "display-custom-name-if-has-color", "display_custom_name_if_has_color",
+                    "displayCustomNameIfHasColor");
             if (customNameColored != null) {
                 this.displayCustomNameIfHasColor = customNameColored;
             }
@@ -479,12 +505,14 @@ public final class ItemTextOptions {
                 this.amount = amt;
             }
 
-            Boolean showOne = getBoolean(section, "show-amount-when-one", "show_amount_when_one", "show-one", "show_one", "showAmountWhenOne");
+            Boolean showOne = getBoolean(section, "show-amount-when-one", "show_amount_when_one", "show-one",
+                    "show_one", "showAmountWhenOne");
             if (showOne != null) {
                 this.showAmountWhenOne = showOne;
             }
 
-            Boolean rarityColor = getBoolean(section, "display-rarity-color", "display_rarity_color", "displayRarityColor", "rarity-color", "rarity_color");
+            Boolean rarityColor = getBoolean(section, "display-rarity-color", "display_rarity_color",
+                    "displayRarityColor", "rarity-color", "rarity_color");
             if (rarityColor != null) {
                 this.displayRarityColor = rarityColor;
             }
@@ -517,7 +545,8 @@ public final class ItemTextOptions {
                 this.hoverEnabled = hover;
             }
 
-            Boolean playerHeads = getBoolean(section, "use-player-heads-for-3d-blocks", "use_player_heads_for_3d_blocks", "usePlayerHeadsFor3DBlocks");
+            Boolean playerHeads = getBoolean(section, "use-player-heads-for-3d-blocks",
+                    "use_player_heads_for_3d_blocks", "usePlayerHeadsFor3DBlocks");
             if (playerHeads != null) {
                 this.usePlayerHeadsFor3DBlocks = playerHeads;
             }
@@ -534,17 +563,21 @@ public final class ItemTextOptions {
             }
             loadContainerSettings(map);
 
-            Boolean brackets = getMapBoolean(map, "brackets", "display-brackets", "display_brackets", "displayBrackets");
+            Boolean brackets = getMapBoolean(map, "brackets", "display-brackets", "display_brackets",
+                    "displayBrackets");
             if (brackets != null) {
                 this.displayBrackets = brackets;
             }
 
-            Boolean customName = getMapBoolean(map, "custom-name", "custom_name", "display-custom-name", "display_custom_name", "displayCustomName");
+            Boolean customName = getMapBoolean(map, "custom-name", "custom_name", "display-custom-name",
+                    "display_custom_name", "displayCustomName");
             if (customName != null) {
                 this.displayCustomName = customName;
             }
 
-            Boolean customNameColored = getMapBoolean(map, "custom-name-if-has-color", "custom_name_if_has_color", "display-custom-name-if-has-color", "display_custom_name_if_has_color", "displayCustomNameIfHasColor");
+            Boolean customNameColored = getMapBoolean(map, "custom-name-if-has-color", "custom_name_if_has_color",
+                    "display-custom-name-if-has-color", "display_custom_name_if_has_color",
+                    "displayCustomNameIfHasColor");
             if (customNameColored != null) {
                 this.displayCustomNameIfHasColor = customNameColored;
             }
@@ -573,12 +606,14 @@ public final class ItemTextOptions {
                 this.amount = amt;
             }
 
-            Boolean showOne = getMapBoolean(map, "show-amount-when-one", "show_amount_when_one", "show-one", "show_one", "showAmountWhenOne");
+            Boolean showOne = getMapBoolean(map, "show-amount-when-one", "show_amount_when_one", "show-one", "show_one",
+                    "showAmountWhenOne");
             if (showOne != null) {
                 this.showAmountWhenOne = showOne;
             }
 
-            Boolean rarityColor = getMapBoolean(map, "display-rarity-color", "display_rarity_color", "displayRarityColor", "rarity-color", "rarity_color");
+            Boolean rarityColor = getMapBoolean(map, "display-rarity-color", "display_rarity_color",
+                    "displayRarityColor", "rarity-color", "rarity_color");
             if (rarityColor != null) {
                 this.displayRarityColor = rarityColor;
             }
@@ -611,7 +646,8 @@ public final class ItemTextOptions {
                 this.hoverEnabled = hover;
             }
 
-            Boolean playerHeads = getMapBoolean(map, "use-player-heads-for-3d-blocks", "use_player_heads_for_3d_blocks", "usePlayerHeadsFor3DBlocks");
+            Boolean playerHeads = getMapBoolean(map, "use-player-heads-for-3d-blocks", "use_player_heads_for_3d_blocks",
+                    "usePlayerHeadsFor3DBlocks");
             if (playerHeads != null) {
                 this.usePlayerHeadsFor3DBlocks = playerHeads;
             }
@@ -652,8 +688,10 @@ public final class ItemTextOptions {
                 if (val instanceof Boolean b) {
                     return b;
                 } else if (val instanceof String s) {
-                    if (s.equalsIgnoreCase("true")) return true;
-                    if (s.equalsIgnoreCase("false")) return false;
+                    if (s.equalsIgnoreCase("true"))
+                        return true;
+                    if (s.equalsIgnoreCase("false"))
+                        return false;
                 }
             }
             return null;

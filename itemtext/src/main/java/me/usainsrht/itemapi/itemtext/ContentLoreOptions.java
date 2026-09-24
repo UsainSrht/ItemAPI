@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.UnaryOperator;
 
 /**
  * Configuration options for container content lore preview.
@@ -26,6 +27,7 @@ public final class ContentLoreOptions {
     private final List<String> header;
     private final List<String> footer;
     private final @Nullable ItemTextOptions content;
+    private final @Nullable UnaryOperator<ItemTextOptions.Builder> contentModifier;
     private final String emptySlot;
     private final String separator;
     private final String emptyMessage;
@@ -38,6 +40,7 @@ public final class ContentLoreOptions {
         this.header = Collections.unmodifiableList(new ArrayList<>(builder.header));
         this.footer = Collections.unmodifiableList(new ArrayList<>(builder.footer));
         this.content = builder.content; // nullable — null means inherit from parent
+        this.contentModifier = builder.contentModifier;
         this.emptySlot = Objects.requireNonNull(builder.emptySlot, "emptySlot");
         this.separator = Objects.requireNonNull(builder.separator, "separator");
         this.emptyMessage = Objects.requireNonNull(builder.emptyMessage, "emptyMessage");
@@ -54,7 +57,8 @@ public final class ContentLoreOptions {
     }
 
     /**
-     * Parses {@link ContentLoreOptions} from a {@link ConfigurationSection}, or returns {@link #defaults()} if {@code section} is null.
+     * Parses {@link ContentLoreOptions} from a {@link ConfigurationSection}, or
+     * returns {@link #defaults()} if {@code section} is null.
      */
     public static ContentLoreOptions fromConfig(@Nullable ConfigurationSection section) {
         if (section == null) {
@@ -64,7 +68,8 @@ public final class ContentLoreOptions {
     }
 
     /**
-     * Parses {@link ContentLoreOptions} from a {@link Map}, or returns {@link #defaults()} if {@code map} is null.
+     * Parses {@link ContentLoreOptions} from a {@link Map}, or returns
+     * {@link #defaults()} if {@code map} is null.
      */
     public static ContentLoreOptions fromMap(@Nullable Map<String, ?> map) {
         if (map == null) {
@@ -91,11 +96,28 @@ public final class ContentLoreOptions {
 
     /**
      * Explicit content formatting options, or {@code null} to inherit from the
-     * parent
-     * {@link ItemTextOptions} (with hover and content-lore disabled).
+     * parent {@link ItemTextOptions} (with hover and content-lore disabled).
      */
     public @Nullable ItemTextOptions content() {
-        return content;
+        if (content != null) {
+            return content;
+        }
+        if (contentModifier != null) {
+            return contentModifier.apply(ItemTextOptions.builder()
+                    .removeItalic(false)
+                    .hoverEnabled(false)
+                    .contentLore(lore -> lore.enabled(false)))
+                    .build();
+        }
+        return null;
+    }
+
+    /**
+     * Optional configurator that overrides only explicitly specified values
+     * on the parent {@link ItemTextOptions}.
+     */
+    public @Nullable UnaryOperator<ItemTextOptions.Builder> contentModifier() {
+        return contentModifier;
     }
 
     public String emptySlot() {
@@ -122,19 +144,31 @@ public final class ContentLoreOptions {
      * Resolves the effective content options to use when rendering inner items.
      *
      * <p>
-     * If {@link #content()} is non-null it is returned as-is.
+     * If an explicit static {@link #content()} is present, it is used as the base.
      * Otherwise {@code parentOptions} is used with hover and content-lore disabled
-     * to prevent recursion.
+     * to prevent recursion, and {@code removeItalic} set to {@code false} by default
+     * for container content preview.
+     * </p>
+     * <p>
+     * If a {@code contentModifier} is present (e.g. from {@link Builder#content(UnaryOperator)}
+     * or a {@code content} section in YAML/Map), it is applied to override only the explicitly
+     * specified values, leaving all other settings inherited from the parent.
      * </p>
      */
     ItemTextOptions resolveContent(ItemTextOptions parentOptions) {
+        ItemTextOptions.Builder builder;
         if (content != null) {
-            return content;
+            builder = content.toBuilder();
+        } else {
+            builder = parentOptions.toBuilder()
+                    .hoverEnabled(false)
+                    .contentLoreEnabled(false)
+                    .removeItalic(false);
         }
-        return parentOptions.toBuilder()
-                .hoverEnabled(false)
-                .contentLoreEnabled(false)
-                .build();
+        if (contentModifier != null) {
+            builder = contentModifier.apply(builder);
+        }
+        return builder.build();
     }
 
     public Builder toBuilder() {
@@ -144,6 +178,7 @@ public final class ContentLoreOptions {
                 .header(header)
                 .footer(footer)
                 .content(content)
+                .contentModifier(contentModifier)
                 .emptySlot(emptySlot)
                 .separator(separator)
                 .emptyMessage(emptyMessage)
@@ -159,6 +194,7 @@ public final class ContentLoreOptions {
         private List<String> footer = List.of();
         /** {@code null} = inherit from parent ItemTextOptions at render time. */
         private @Nullable ItemTextOptions content = null;
+        private @Nullable UnaryOperator<ItemTextOptions.Builder> contentModifier = null;
         private String emptySlot = "<sprite:gui:container/slot>";
         private String separator = "";
         private String emptyMessage = " <white><!italic><translate:item.minecraft.bundle.empty> ";
@@ -272,6 +308,10 @@ public final class ContentLoreOptions {
             if (contentLineVal != null) {
                 this.contentLine = contentLineVal;
             }
+            if (section.isConfigurationSection("content")) {
+                ConfigurationSection contentSec = section.getConfigurationSection("content");
+                this.content(b -> b.load(contentSec));
+            }
             return this;
         }
 
@@ -319,6 +359,12 @@ public final class ContentLoreOptions {
             String contentLineVal = getMapString(map, "content-line", "content_line", "contentLine");
             if (contentLineVal != null) {
                 this.contentLine = contentLineVal;
+            }
+            Object contentVal = map.get("content");
+            if (contentVal instanceof Map<?, ?> m) {
+                @SuppressWarnings("unchecked")
+                Map<String, ?> typed = (Map<String, ?>) m;
+                this.content(b -> b.load(typed));
             }
             return this;
         }
@@ -396,10 +442,38 @@ public final class ContentLoreOptions {
         }
 
         /**
-         * Sets explicit content options. Pass {@code null} to inherit from parent.
+         * Sets explicit static content options. Pass {@code null} to inherit from parent.
          */
         public Builder content(@Nullable ItemTextOptions content) {
             this.content = content;
+            return this;
+        }
+
+        /**
+         * Sets a content configurator that overrides only explicitly specified values
+         * on the parent {@link ItemTextOptions} at render time.
+         */
+        public Builder contentModifier(@Nullable UnaryOperator<ItemTextOptions.Builder> contentModifier) {
+            this.contentModifier = contentModifier;
+            return this;
+        }
+
+        /**
+         * Configures content options using a builder configurator.
+         * Only the values modified by the configurator will override the parent options;
+         * all other values fall back to the parent {@link ItemTextOptions}.
+         */
+        public Builder content(@Nullable UnaryOperator<ItemTextOptions.Builder> configurator) {
+            if (configurator == null) {
+                this.contentModifier = null;
+                return this;
+            }
+            if (this.contentModifier == null) {
+                this.contentModifier = configurator;
+            } else {
+                UnaryOperator<ItemTextOptions.Builder> prev = this.contentModifier;
+                this.contentModifier = b -> configurator.apply(prev.apply(b));
+            }
             return this;
         }
 
