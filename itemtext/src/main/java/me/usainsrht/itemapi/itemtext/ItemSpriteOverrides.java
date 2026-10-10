@@ -101,6 +101,7 @@ final class ItemSpriteOverrides {
         putBlock(map, "vault", "vault_front_off");
         putBlock(map, "trial_spawner", "trial_spawner_side_inactive");
         putBlock(map, "dried_ghast", "dried_ghast_hydration_0_north");
+        putBlock(map, "lectern", "lectern_front");
 
         // Waxed copper reuses unwaxed textures (doors/lanterns/chains are item sprites)
         // Other multi-face blocks are resolved by BlockSpriteLookup.

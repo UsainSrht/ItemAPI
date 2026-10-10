@@ -48,7 +48,8 @@ class HeadSpriteTest {
             "wither_skeleton_skull",
             "zombie_head",
             "creeper_head",
-            "piglin_head");
+            "piglin_head",
+            "lectern");
 
     @Test
     void testHeadTextureRegistryIntegrity() {
@@ -85,6 +86,19 @@ class HeadSpriteTest {
     }
 
     @Test
+    void testLecternHeadSprite() {
+        ItemStack lectern = stubItem(Material.LECTERN);
+        Component sprite = ItemSpriteFactory.create(lectern, ItemTextOptions.defaults());
+        String serialized = GsonComponentSerializer.gson().serialize(sprite);
+
+        assertTrue(serialized.contains("\"hat\":true"), "Hat must be true for lectern");
+        assertTrue(serialized.contains("\"properties\":[{\"name\":\"textures\""),
+                "Textures property must exist for lectern");
+        assertTrue(serialized.contains(HeadTextureRegistry.find("lectern").base64Texture()),
+                "Must contain lectern base64");
+    }
+
+    @Test
     void testOfflineFallbackToggle() {
         ItemStack chest = stubItem(Material.CHEST);
         ItemTextOptions offlineOptions = ItemTextOptions.builder().usePlayerHeadsFor3DBlocks(false).build();
@@ -107,6 +121,11 @@ class HeadSpriteTest {
         Component copperChestSprite = ItemSpriteFactory.create(copperChest, offlineOptions);
         assertEquals("{\"sprite\":\"minecraft:block/copper_block\"}",
                 GsonComponentSerializer.gson().serialize(copperChestSprite));
+
+        ItemStack lectern = stubItem(Material.LECTERN);
+        Component lecternSprite = ItemSpriteFactory.create(lectern, offlineOptions);
+        assertEquals("{\"sprite\":\"minecraft:block/lectern_front\"}",
+                GsonComponentSerializer.gson().serialize(lecternSprite));
     }
 
     @Test
@@ -129,7 +148,8 @@ class HeadSpriteTest {
                 Material.WITHER_SKELETON_SKULL,
                 Material.ZOMBIE_HEAD,
                 Material.CREEPER_HEAD,
-                Material.PIGLIN_HEAD
+                Material.PIGLIN_HEAD,
+                Material.LECTERN
         };
 
         for (Material mat : materials) {

@@ -168,7 +168,7 @@ public final class ItemTextOptions {
     /**
      * When {@code true} (the default), items and blocks with 3D or entity models
      * (such as
-     * chests, mob heads, and heavy core) are rendered using 2D player head font
+     * chests, mob heads, lectern, and heavy core) are rendered using 2D player head font
      * glyphs with
      * curated, asynchronous client-cached skin textures. When {@code false}, they
      * fall back

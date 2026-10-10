@@ -10,7 +10,7 @@ import java.util.UUID;
  * Registry of pre-baked, curated Base64 textures and deterministic UUIDs for
  * items and blocks
  * whose inventory representation is 3D or entity-based (chests, mob heads,
- * heavy core) so they
+ * heavy core, lectern) so they
  * can render as 2D player head font glyphs with asynchronous client-side
  * texture loading and caching.
  */
@@ -53,6 +53,8 @@ final class HeadTextureRegistry {
             "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZjQyNTQ4MzhjMzNlYTIyN2ZmY2EyMjNkZGRhYWJmZTBiMDIxNWY3MGRhNjQ5ZTk0NDQ3N2Y0NDM3MGNhNjk1MiJ9fX0=";
     private static final String PIGLIN_HEAD =
             "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODNlMmMyZDY2OTY3ZDQ3MTViYmY2ZjE0ZDIyMDVhNjM3ZDNkMDFiM2ZkMTA2MzExYzYwNzM3ODAyZjJiZDc1NyJ9fX0=";
+    private static final String LECTERN =
+            "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYWUzZjlhZDk0NzA1NGE3NGZiNWE4NjlmNzE0ZWU3MGUxZWFiNzgwZGE4OGViYTFkODM1ZTFlODJmN2NhNzg0In19fQ==";
 
     private static final Map<String, HeadRef> HEADS = Map.ofEntries(
             entry("chest", CHEST),
@@ -88,7 +90,8 @@ final class HeadTextureRegistry {
             entry("wither_skeleton_skull", WITHER_SKELETON_SKULL),
             entry("zombie_head", ZOMBIE_HEAD),
             entry("creeper_head", CREEPER_HEAD),
-            entry("piglin_head", PIGLIN_HEAD));
+            entry("piglin_head", PIGLIN_HEAD),
+            entry("lectern", LECTERN));
 
     private HeadTextureRegistry() {
     }
