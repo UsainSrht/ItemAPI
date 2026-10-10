@@ -24,30 +24,40 @@ public final class ComponentHandlerRegistry {
 
     public ComponentHandlerRegistry() {
         indexTypes();
-        registerAlias("enchants", DataComponentTypes.ENCHANTMENTS);
-        registerAlias("stored_enchants", DataComponentTypes.STORED_ENCHANTMENTS);
+        registerAlias("enchants", "enchantments");
+        registerAlias("stored_enchants", "stored_enchantments");
         ComponentHandlers.registerAll(this);
     }
 
     private void indexTypes() {
-        for (Field field : DataComponentTypes.class.getFields()) {
-            if (!Modifier.isStatic(field.getModifiers())) {
-                continue;
+        try {
+            for (Field field : DataComponentTypes.class.getFields()) {
+                if (!Modifier.isStatic(field.getModifiers())) {
+                    continue;
+                }
+                if (!DataComponentType.class.isAssignableFrom(field.getType())) {
+                    continue;
+                }
+                try {
+                    DataComponentType type = (DataComponentType) field.get(null);
+                    if (type != null) {
+                        registerId(type);
+                    }
+                } catch (Throwable ignored) {
+                    // skip inaccessible or linkage issues
+                }
             }
-            if (!DataComponentType.class.isAssignableFrom(field.getType())) {
-                continue;
-            }
-            try {
-                DataComponentType type = (DataComponentType) field.get(null);
-                registerId(type);
-            } catch (IllegalAccessException ignored) {
-                // skip inaccessible
-            }
+        } catch (Throwable ignored) {
         }
         // Prefer registry if available at runtime
-        Registry<DataComponentType> registry = Registry.DATA_COMPONENT_TYPE;
-        for (DataComponentType type : registry) {
-            registerId(type);
+        try {
+            Registry<DataComponentType> registry = Registry.DATA_COMPONENT_TYPE;
+            if (registry != null) {
+                for (DataComponentType type : registry) {
+                    registerId(type);
+                }
+            }
+        } catch (Throwable ignored) {
         }
     }
 
@@ -63,11 +73,39 @@ public final class ComponentHandlerRegistry {
         registerId(type);
     }
 
+    public boolean register(String id, ComponentHandler handler) {
+        DataComponentType type = resolveType(id);
+        if (type != null) {
+            register(type, handler);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean registerSafely(String id, ComponentHandler handler) {
+        try {
+            return register(id, handler);
+        } catch (Throwable t) {
+            me.usainsrht.itemapi.yamlitem.internal.ItemLogger.warn("Failed to register component handler for '" + id + "': " + t.getMessage());
+            return false;
+        }
+    }
+
     public void registerAlias(String alias, DataComponentType type) {
+        if (type == null) {
+            return;
+        }
         String normalized = alias.toLowerCase(Locale.ROOT).trim();
         byId.put(normalized, type);
         byId.put("minecraft:" + normalized, type);
         byId.put(normalized.replace('_', '-'), type);
+    }
+
+    public void registerAlias(String alias, String targetComponentId) {
+        DataComponentType type = resolveType(targetComponentId);
+        if (type != null) {
+            registerAlias(alias, type);
+        }
     }
 
     public DataComponentType requireType(String id, String path) {
@@ -112,6 +150,10 @@ public final class ComponentHandlerRegistry {
 
     public Set<DataComponentType> registeredTypes() {
         return Collections.unmodifiableSet(byType.keySet());
+    }
+
+    public ComponentHandler getHandler(DataComponentType type) {
+        return byType.get(type);
     }
 
     public boolean hasHandler(DataComponentType type) {

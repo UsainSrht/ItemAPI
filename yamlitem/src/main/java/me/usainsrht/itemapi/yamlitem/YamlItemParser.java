@@ -1,9 +1,9 @@
 package me.usainsrht.itemapi.yamlitem;
 
 import io.papermc.paper.datacomponent.DataComponentType;
-import io.papermc.paper.datacomponent.DataComponentTypes;
 import me.usainsrht.itemapi.yamlitem.handler.ComponentHandler;
 import me.usainsrht.itemapi.yamlitem.handler.ComponentHandlerRegistry;
+import me.usainsrht.itemapi.yamlitem.internal.ItemLogger;
 import me.usainsrht.itemapi.yamlitem.handler.Legacy1214Handlers;
 import me.usainsrht.itemapi.yamlitem.handler.Modern26Handlers;
 import me.usainsrht.itemapi.yamlitem.internal.TextUtil;
@@ -160,29 +160,29 @@ public final class YamlItemParser {
         if (node.contains("name") || node.contains("custom_name")) {
             Object value = node.contains("name") ? node.raw("name") : node.raw("custom_name");
             String path = node.contains("name") ? node.childPath("name") : node.childPath("custom_name");
-            applyValued(stack, DataComponentTypes.CUSTOM_NAME, value, path);
+            applyShortcut(stack, "custom_name", value, path);
             applied.add("custom_name");
             applied.add("name");
         }
         if (node.contains("item_name")) {
-            applyValued(stack, DataComponentTypes.ITEM_NAME, node.raw("item_name"), node.childPath("item_name"));
+            applyShortcut(stack, "item_name", node.raw("item_name"), node.childPath("item_name"));
             applied.add("item_name");
         }
         if (node.contains("lore")) {
-            applyValued(stack, DataComponentTypes.LORE, node.raw("lore"), node.childPath("lore"));
+            applyShortcut(stack, "lore", node.raw("lore"), node.childPath("lore"));
             applied.add("lore");
         }
         if (node.contains("enchantments") || node.contains("enchants")) {
             Object value = node.contains("enchantments") ? node.raw("enchantments") : node.raw("enchants");
             String path = node.contains("enchantments") ? node.childPath("enchantments") : node.childPath("enchants");
-            applyValued(stack, DataComponentTypes.ENCHANTMENTS, value, path);
+            applyShortcut(stack, "enchantments", value, path);
             applied.add("enchantments");
             applied.add("enchants");
         }
         if (node.contains("stored_enchantments") || node.contains("stored_enchants")) {
             Object value = node.contains("stored_enchantments") ? node.raw("stored_enchantments") : node.raw("stored_enchants");
             String path = node.contains("stored_enchantments") ? node.childPath("stored_enchantments") : node.childPath("stored_enchants");
-            applyValued(stack, DataComponentTypes.STORED_ENCHANTMENTS, value, path);
+            applyShortcut(stack, "stored_enchantments", value, path);
             applied.add("stored_enchantments");
             applied.add("stored_enchants");
         }
@@ -192,38 +192,38 @@ public final class YamlItemParser {
             applied.add("unbreakable");
         }
         if (node.contains("damage")) {
-            applyValued(stack, DataComponentTypes.DAMAGE, node.raw("damage"), node.childPath("damage"));
+            applyShortcut(stack, "damage", node.raw("damage"), node.childPath("damage"));
             applied.add("damage");
         }
         if (node.contains("max_damage")) {
-            applyValued(stack, DataComponentTypes.MAX_DAMAGE, node.raw("max_damage"), node.childPath("max_damage"));
+            applyShortcut(stack, "max_damage", node.raw("max_damage"), node.childPath("max_damage"));
             applied.add("max_damage");
         }
         if (node.contains("max_stack_size")) {
-            applyValued(stack, DataComponentTypes.MAX_STACK_SIZE, node.raw("max_stack_size"), node.childPath("max_stack_size"));
+            applyShortcut(stack, "max_stack_size", node.raw("max_stack_size"), node.childPath("max_stack_size"));
             applied.add("max_stack_size");
         }
         if (node.contains("custom_model_data")) {
-            applyValued(stack, DataComponentTypes.CUSTOM_MODEL_DATA, node.raw("custom_model_data"), node.childPath("custom_model_data"));
+            applyShortcut(stack, "custom_model_data", node.raw("custom_model_data"), node.childPath("custom_model_data"));
             applied.add("custom_model_data");
         }
         if (node.contains("glint") || node.contains("enchantment_glint_override") || node.contains("enchantment-glint-override")) {
             Object value = node.contains("glint") ? node.raw("glint") : node.raw("enchantment_glint_override");
             String path = node.contains("glint") ? node.childPath("glint") : node.childPath("enchantment_glint_override");
-            applyValued(stack, DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, value, path);
+            applyShortcut(stack, "enchantment_glint_override", value, path);
             applied.add("enchantment_glint_override");
             applied.add("glint");
         }
         if (node.contains("rarity")) {
-            applyValued(stack, DataComponentTypes.RARITY, node.raw("rarity"), node.childPath("rarity"));
+            applyShortcut(stack, "rarity", node.raw("rarity"), node.childPath("rarity"));
             applied.add("rarity");
         }
         if (node.contains("item_model")) {
-            applyValued(stack, DataComponentTypes.ITEM_MODEL, node.raw("item_model"), node.childPath("item_model"));
+            applyShortcut(stack, "item_model", node.raw("item_model"), node.childPath("item_model"));
             applied.add("item_model");
         }
         if (node.contains("repair_cost")) {
-            applyValued(stack, DataComponentTypes.REPAIR_COST, node.raw("repair_cost"), node.childPath("repair_cost"));
+            applyShortcut(stack, "repair_cost", node.raw("repair_cost"), node.childPath("repair_cost"));
             applied.add("repair_cost");
         }
         if (node.contains("hide_tooltip")) {
@@ -244,8 +244,25 @@ public final class YamlItemParser {
             if (applied.contains(type.getKey().getKey())) {
                 continue;
             }
-            applyComponent(stack, type, key, node.raw(key), node.childPath(key));
+            try {
+                applyComponent(stack, type, key, node.raw(key), node.childPath(key));
+            } catch (Throwable t) {
+                ItemLogger.warn("Failed to apply component '" + componentId + "' at path '" + node.childPath(key) + "': " + t.getMessage());
+            }
             applied.add(type.getKey().getKey());
+        }
+    }
+
+    private void applyShortcut(ItemStack stack, String componentId, Object value, String path) {
+        try {
+            DataComponentType type = handlers().resolveType(componentId);
+            if (type != null) {
+                applyComponent(stack, type, componentId, value, path);
+            } else {
+                ItemLogger.warn("Unknown or unsupported data component '" + componentId + "' at path '" + path + "'. Skipping component.");
+            }
+        } catch (Throwable t) {
+            ItemLogger.warn("Failed to apply shortcut for '" + componentId + "' at path '" + path + "': " + t.getMessage());
         }
     }
 
@@ -253,7 +270,7 @@ public final class YamlItemParser {
         for (String key : components.keys()) {
             boolean unsetPrefix = key.startsWith("!");
             String componentId = unsetPrefix ? key.substring(1) : key;
-            if (componentId.equals("hide_tooltip")) {
+            if (componentId.equals("hide_tooltip") || componentId.equals("hide_additional_tooltip")) {
                 if (applied.contains("hide_tooltip")) {
                     continue; // root shortcut wins
                 }
@@ -277,7 +294,11 @@ public final class YamlItemParser {
                 applied.add("unbreakable");
                 continue;
             }
-            DataComponentType type = handlers().requireType(componentId, components.childPath(key));
+            DataComponentType type = handlers().resolveType(componentId);
+            if (type == null) {
+                ItemLogger.warn("Unknown or unsupported data component '" + componentId + "' at path '" + components.childPath(key) + "'. Skipping component.");
+                continue;
+            }
             String id = type.getKey().getKey();
             if (applied.contains(id)) {
                 continue; // root shortcut wins
@@ -286,12 +307,20 @@ public final class YamlItemParser {
             if (unsetPrefix) {
                 boolean shouldUnset = value == null || ValueUtil.asBoolean(value, components.childPath(key));
                 if (shouldUnset) {
-                    stack.unsetData(type);
+                    try {
+                        stack.unsetData(type);
+                    } catch (Throwable t) {
+                        ItemLogger.warn("Failed to unset data component '" + componentId + "' at path '" + components.childPath(key) + "': " + t.getMessage());
+                    }
                     applied.add(id);
                 }
                 continue;
             }
-            applyComponent(stack, type, key, value, components.childPath(key));
+            try {
+                applyComponent(stack, type, key, value, components.childPath(key));
+            } catch (Throwable t) {
+                ItemLogger.warn("Failed to apply data component '" + componentId + "' at path '" + components.childPath(key) + "': " + t.getMessage());
+            }
             applied.add(id);
         }
     }
@@ -403,8 +432,16 @@ public final class YamlItemParser {
             stack.unsetData(type);
             return;
         }
-        ComponentHandler handler = handlers().requireHandler(type, path);
-        handler.apply(stack, type, value, path, this);
+        ComponentHandler handler = handlers().getHandler(type);
+        if (handler == null) {
+            ItemLogger.warn("No handler registered for data component '" + type.getKey() + "' at path '" + path + "'. Skipping component.");
+            return;
+        }
+        try {
+            handler.apply(stack, type, value, path, this);
+        } catch (Throwable t) {
+            ItemLogger.warn("Failed to apply data component '" + type.getKey() + "' at path '" + path + "': " + t.getMessage());
+        }
     }
 
     public ComponentHandlerRegistry handlers() {

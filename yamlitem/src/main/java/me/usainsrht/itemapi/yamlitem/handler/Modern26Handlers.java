@@ -84,31 +84,35 @@ public final class Modern26Handlers {
         if (stack == null) {
             return;
         }
-        if (enabled) {
-            stack.setData(DataComponentTypes.UNBREAKABLE);
-            if (!showInTooltip) {
-                TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
-                Set<DataComponentType> hidden = new HashSet<>(existing != null ? existing.hiddenComponents() : Set.of());
-                hidden.add(DataComponentTypes.UNBREAKABLE);
-                TooltipDisplay.Builder builder = TooltipDisplay.tooltipDisplay()
-                        .hiddenComponents(hidden);
-                if (existing != null) {
-                    builder.hideTooltip(existing.hideTooltip());
-                }
-                stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
-            } else {
-                TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
-                if (existing != null && existing.hiddenComponents().contains(DataComponentTypes.UNBREAKABLE)) {
-                    Set<DataComponentType> hidden = new HashSet<>(existing.hiddenComponents());
-                    hidden.remove(DataComponentTypes.UNBREAKABLE);
+        try {
+            if (enabled) {
+                stack.setData(DataComponentTypes.UNBREAKABLE);
+                if (!showInTooltip) {
+                    TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
+                    Set<DataComponentType> hidden = new HashSet<>(existing != null ? existing.hiddenComponents() : Set.of());
+                    hidden.add(DataComponentTypes.UNBREAKABLE);
                     TooltipDisplay.Builder builder = TooltipDisplay.tooltipDisplay()
-                            .hiddenComponents(hidden)
-                            .hideTooltip(existing.hideTooltip());
+                            .hiddenComponents(hidden);
+                    if (existing != null) {
+                        builder.hideTooltip(existing.hideTooltip());
+                    }
                     stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
+                } else {
+                    TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
+                    if (existing != null && existing.hiddenComponents().contains(DataComponentTypes.UNBREAKABLE)) {
+                        Set<DataComponentType> hidden = new HashSet<>(existing.hiddenComponents());
+                        hidden.remove(DataComponentTypes.UNBREAKABLE);
+                        TooltipDisplay.Builder builder = TooltipDisplay.tooltipDisplay()
+                                .hiddenComponents(hidden)
+                                .hideTooltip(existing.hideTooltip());
+                        stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
+                    }
                 }
+            } else {
+                stack.unsetData(DataComponentTypes.UNBREAKABLE);
             }
-        } else {
-            stack.unsetData(DataComponentTypes.UNBREAKABLE);
+        } catch (Throwable t) {
+            me.usainsrht.itemapi.yamlitem.internal.ItemLogger.warn("Failed to apply 26.x unbreakable: " + t.getMessage());
         }
     }
 
@@ -116,13 +120,17 @@ public final class Modern26Handlers {
         if (stack == null) {
             return;
         }
-        TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
-        TooltipDisplay.Builder builder = TooltipDisplay.tooltipDisplay()
-                .hideTooltip(hide);
-        if (existing != null) {
-            builder.hiddenComponents(existing.hiddenComponents());
+        try {
+            TooltipDisplay existing = stack.getData(DataComponentTypes.TOOLTIP_DISPLAY);
+            TooltipDisplay.Builder builder = TooltipDisplay.tooltipDisplay()
+                    .hideTooltip(hide);
+            if (existing != null) {
+                builder.hiddenComponents(existing.hiddenComponents());
+            }
+            stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
+        } catch (Throwable t) {
+            me.usainsrht.itemapi.yamlitem.internal.ItemLogger.warn("Failed to apply 26.x hide tooltip: " + t.getMessage());
         }
-        stack.setData(DataComponentTypes.TOOLTIP_DISPLAY, builder.build());
     }
 
     private static void registerEntityVariants(ComponentHandlerRegistry registry) {
@@ -164,9 +172,13 @@ public final class Modern26Handlers {
     }
 
     private static void registerIfPresent(ComponentHandlerRegistry registry, String id, ComponentHandler handler) {
-        DataComponentType type = registry.resolveType(id);
-        if (type != null) {
-            registry.register(type, handler);
+        try {
+            DataComponentType type = registry.resolveType(id);
+            if (type != null) {
+                registry.register(type, handler);
+            }
+        } catch (Throwable t) {
+            me.usainsrht.itemapi.yamlitem.internal.ItemLogger.warn("Failed to register 26.x component '" + id + "': " + t.getMessage());
         }
     }
 
@@ -303,7 +315,12 @@ public final class Modern26Handlers {
         if (node.contains("hidden_components")) {
             Set<DataComponentType> hidden = new HashSet<>();
             for (Object element : node.list("hidden_components")) {
-                hidden.add(parser.handlers().requireType(String.valueOf(element), node.childPath("hidden_components")));
+                DataComponentType compType = parser.handlers().resolveType(String.valueOf(element));
+                if (compType != null) {
+                    hidden.add(compType);
+                } else {
+                    me.usainsrht.itemapi.yamlitem.internal.ItemLogger.warn("Unknown or unsupported data component '" + element + "' in hidden_components at path '" + node.childPath("hidden_components") + "'. Skipping.");
+                }
             }
             builder.hiddenComponents(hidden);
         } else if (existing != null) {

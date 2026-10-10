@@ -2,7 +2,6 @@ package me.usainsrht.itemapi.yamlitem.handler;
 
 import io.papermc.paper.block.BlockPredicate;
 import io.papermc.paper.datacomponent.DataComponentType;
-import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.BannerPatternLayers;
 import io.papermc.paper.datacomponent.item.BundleContents;
 import io.papermc.paper.datacomponent.item.ChargedProjectiles;
@@ -25,7 +24,6 @@ import io.papermc.paper.datacomponent.item.JukeboxPlayable;
 import io.papermc.paper.datacomponent.item.LodestoneTracker;
 import io.papermc.paper.datacomponent.item.MapDecorations;
 import io.papermc.paper.datacomponent.item.MapId;
-import io.papermc.paper.datacomponent.item.MapItemColor;
 import io.papermc.paper.datacomponent.item.OminousBottleAmplifier;
 import io.papermc.paper.datacomponent.item.PotDecorations;
 import io.papermc.paper.datacomponent.item.PotionContents;
@@ -99,47 +97,49 @@ public final class ComponentHandlers {
         }
 
         // Flags
-        registry.register(DataComponentTypes.INTANGIBLE_PROJECTILE, flag());
-        registry.register(DataComponentTypes.GLIDER, flag());
+        registry.registerSafely("intangible_projectile", flag());
+        registry.registerSafely("glider", flag());
 
         // Scalars
-        registry.register(DataComponentTypes.MAX_STACK_SIZE, integer());
-        registry.register(DataComponentTypes.MAX_DAMAGE, integer());
-        registry.register(DataComponentTypes.DAMAGE, integer());
-        registry.register(DataComponentTypes.REPAIR_COST, integer());
-        registry.register(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, booleanValue());
+        registry.registerSafely("max_stack_size", integer());
+        registry.registerSafely("max_damage", integer());
+        registry.registerSafely("damage", integer());
+        registry.registerSafely("repair_cost", integer());
+        registry.registerSafely("enchantment_glint_override", booleanValue());
 
         // Text
-        registry.register(DataComponentTypes.CUSTOM_NAME, (stack, type, value, path, parser) ->
+        registry.registerSafely("custom_name", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, HandlerSupport.component(value, path, parser)));
-        registry.register(DataComponentTypes.ITEM_NAME, (stack, type, value, path, parser) ->
+        registry.registerSafely("item_name", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, HandlerSupport.component(value, path, parser)));
-        registry.register(DataComponentTypes.LORE, ComponentHandlers::lore);
+        registry.registerSafely("lore", ComponentHandlers::lore);
 
         // Keys
-        registry.register(DataComponentTypes.ITEM_MODEL, keyValue());
-        registry.register(DataComponentTypes.TOOLTIP_STYLE, keyValue());
-        registry.register(DataComponentTypes.NOTE_BLOCK_SOUND, keyValue());
+        registry.registerSafely("item_model", keyValue());
+        registry.registerSafely("tooltip_style", keyValue());
+        registry.registerSafely("note_block_sound", keyValue());
 
         // Enums / simple registry
-        registry.register(DataComponentTypes.RARITY, (stack, type, value, path, parser) ->
+        registry.registerSafely("rarity", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, ValueUtil.enumValue(ItemRarity.class, value, path)));
-        registry.register(DataComponentTypes.MAP_POST_PROCESSING, (stack, type, value, path, parser) ->
+        registry.registerSafely("map_post_processing", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, ValueUtil.enumValue(MapPostProcessing.class, value, path)));
-        registry.register(DataComponentTypes.INSTRUMENT, (stack, type, value, path, parser) ->
+        registry.registerSafely("instrument", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, RegistryUtil.require(Registry.INSTRUMENT, value, path)));
-        registry.register(DataComponentTypes.PAINTING_VARIANT, (stack, type, value, path, parser) ->
+        registry.registerSafely("painting_variant", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, RegistryUtil.require(Registry.ART, value, path)));
 
         // Colors
-        registry.register(DataComponentTypes.BASE_COLOR, dyeColor());
-        registry.register(DataComponentTypes.DYED_COLOR, ComponentHandlers::dyedColor);
-        registry.register(DataComponentTypes.MAP_COLOR, ComponentHandlers::mapColor);
+        registry.registerSafely("base_color", dyeColor());
+        registry.registerSafely("dyed_color", ComponentHandlers::dyedColor);
+        if (registry.hasType("map_color")) {
+            registry.registerSafely("map_color", ComponentHandlers::mapColor);
+        }
 
         // Enchantments
-        registry.register(DataComponentTypes.ENCHANTMENTS, enchantments());
-        registry.register(DataComponentTypes.STORED_ENCHANTMENTS, enchantments());
-        registry.register(DataComponentTypes.ENCHANTABLE, (stack, type, value, path, parser) -> {
+        registry.registerSafely("enchantments", enchantments());
+        registry.registerSafely("stored_enchantments", enchantments());
+        registry.registerSafely("enchantable", (stack, type, value, path, parser) -> {
             int level = value instanceof Map || value instanceof org.bukkit.configuration.ConfigurationSection
                     ? ValueUtil.requireInt(HandlerSupport.asNode(value, path), "value")
                     : ValueUtil.asInt(value, path);
@@ -147,56 +147,60 @@ public final class ComponentHandlers {
         });
 
         // Common complex
-        registry.register(DataComponentTypes.CUSTOM_MODEL_DATA, ComponentHandlers::customModelData);
-        registry.register(DataComponentTypes.FOOD, ComponentHandlers::food);
-        registry.register(DataComponentTypes.CONSUMABLE, ComponentHandlers::consumable);
-        registry.register(DataComponentTypes.USE_COOLDOWN, ComponentHandlers::useCooldown);
-        registry.register(DataComponentTypes.USE_REMAINDER, ComponentHandlers::useRemainder);
-        registry.register(DataComponentTypes.TOOL, ComponentHandlers::tool);
-        registry.register(DataComponentTypes.EQUIPPABLE, ComponentHandlers::equippable);
-        registry.register(DataComponentTypes.REPAIRABLE, ComponentHandlers::repairable);
-        registry.register(DataComponentTypes.DAMAGE_RESISTANT, ComponentHandlers::damageResistant);
-        registry.register(DataComponentTypes.ATTRIBUTE_MODIFIERS, ComponentHandlers::attributes);
-        registry.register(DataComponentTypes.POTION_CONTENTS, ComponentHandlers::potionContents);
-        registry.register(DataComponentTypes.PROFILE, ComponentHandlers::profile);
-        registry.register(DataComponentTypes.FIREWORKS, ComponentHandlers::fireworks);
-        registry.register(DataComponentTypes.FIREWORK_EXPLOSION, (stack, type, value, path, parser) ->
+        registry.registerSafely("custom_model_data", ComponentHandlers::customModelData);
+        registry.registerSafely("food", ComponentHandlers::food);
+        registry.registerSafely("consumable", ComponentHandlers::consumable);
+        registry.registerSafely("use_cooldown", ComponentHandlers::useCooldown);
+        registry.registerSafely("use_remainder", ComponentHandlers::useRemainder);
+        registry.registerSafely("tool", ComponentHandlers::tool);
+        registry.registerSafely("equippable", ComponentHandlers::equippable);
+        registry.registerSafely("repairable", ComponentHandlers::repairable);
+        registry.registerSafely("damage_resistant", ComponentHandlers::damageResistant);
+        registry.registerSafely("attribute_modifiers", ComponentHandlers::attributes);
+        registry.registerSafely("potion_contents", ComponentHandlers::potionContents);
+        registry.registerSafely("profile", ComponentHandlers::profile);
+        registry.registerSafely("fireworks", ComponentHandlers::fireworks);
+        registry.registerSafely("firework_explosion", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, HandlerSupport.fireworkEffect(value, path)));
-        registry.register(DataComponentTypes.TRIM, ComponentHandlers::trim);
-        registry.register(DataComponentTypes.JUKEBOX_PLAYABLE, ComponentHandlers::jukebox);
-        registry.register(DataComponentTypes.LODESTONE_TRACKER, ComponentHandlers::lodestone);
-        registry.register(DataComponentTypes.BUNDLE_CONTENTS, nestedItems(BundleContents::bundleContents));
-        registry.register(DataComponentTypes.CONTAINER, nestedItems(ItemContainerContents::containerContents));
-        registry.register(DataComponentTypes.CHARGED_PROJECTILES, nestedItems(ChargedProjectiles::chargedProjectiles));
-        registry.register(DataComponentTypes.CONTAINER_LOOT, ComponentHandlers::containerLoot);
-        registry.register(DataComponentTypes.MAP_ID, (stack, type, value, path, parser) ->
+        registry.registerSafely("trim", ComponentHandlers::trim);
+        registry.registerSafely("jukebox_playable", ComponentHandlers::jukebox);
+        registry.registerSafely("lodestone_tracker", ComponentHandlers::lodestone);
+        registry.registerSafely("bundle_contents", nestedItems(BundleContents::bundleContents));
+        registry.registerSafely("container", nestedItems(ItemContainerContents::containerContents));
+        registry.registerSafely("charged_projectiles", nestedItems(ChargedProjectiles::chargedProjectiles));
+        registry.registerSafely("container_loot", ComponentHandlers::containerLoot);
+        registry.registerSafely("map_id", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, MapId.mapId(ValueUtil.asInt(value, path))));
-        registry.register(DataComponentTypes.MAP_DECORATIONS, ComponentHandlers::mapDecorations);
-        registry.register(DataComponentTypes.OMINOUS_BOTTLE_AMPLIFIER, (stack, type, value, path, parser) ->
+        registry.registerSafely("map_decorations", ComponentHandlers::mapDecorations);
+        registry.registerSafely("ominous_bottle_amplifier", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, OminousBottleAmplifier.amplifier(ValueUtil.asInt(value, path))));
-        registry.register(DataComponentTypes.SUSPICIOUS_STEW_EFFECTS, ComponentHandlers::suspiciousStew);
-        registry.register(DataComponentTypes.WRITABLE_BOOK_CONTENT, ComponentHandlers::writableBook);
-        registry.register(DataComponentTypes.WRITTEN_BOOK_CONTENT, ComponentHandlers::writtenBook);
-        registry.register(DataComponentTypes.BANNER_PATTERNS, ComponentHandlers::bannerPatterns);
-        registry.register(DataComponentTypes.POT_DECORATIONS, ComponentHandlers::potDecorations);
-        registry.register(DataComponentTypes.CAN_PLACE_ON, adventurePredicate());
-        registry.register(DataComponentTypes.CAN_BREAK, adventurePredicate());
-        registry.register(DataComponentTypes.DEATH_PROTECTION, ComponentHandlers::deathProtection);
-        registry.register(DataComponentTypes.RECIPES, ComponentHandlers::recipes);
-        registry.register(DataComponentTypes.BLOCK_DATA, (stack, type, value, path, parser) ->
+        registry.registerSafely("suspicious_stew_effects", ComponentHandlers::suspiciousStew);
+        registry.registerSafely("writable_book_content", ComponentHandlers::writableBook);
+        registry.registerSafely("written_book_content", ComponentHandlers::writtenBook);
+        registry.registerSafely("banner_patterns", ComponentHandlers::bannerPatterns);
+        registry.registerSafely("pot_decorations", ComponentHandlers::potDecorations);
+        registry.registerSafely("can_place_on", adventurePredicate());
+        registry.registerSafely("can_break", adventurePredicate());
+        registry.registerSafely("death_protection", ComponentHandlers::deathProtection);
+        registry.registerSafely("recipes", ComponentHandlers::recipes);
+        registry.registerSafely("block_data", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, io.papermc.paper.datacomponent.item.BlockItemDataProperties.blockItemStateProperties().build()));
 
         // 1.21.4 hide tooltip flags
         if (registry.hasType("hide_tooltip")) {
-            registry.register(registry.resolveType("hide_tooltip"), flag());
+            registry.registerSafely("hide_tooltip", flag());
         }
         if (registry.hasType("hide_additional_tooltip")) {
-            registry.register(registry.resolveType("hide_additional_tooltip"), flag());
+            registry.registerSafely("hide_additional_tooltip", flag());
         }
 
         // Modern 26.x components
         if (registry.hasType("blocks_attacks") || registry.hasType("tooltip_display") || registry.hasType("weapon")) {
-            Modern26Handlers.registerAll(registry);
+            try {
+                Modern26Handlers.registerAll(registry);
+            } catch (Throwable t) {
+                me.usainsrht.itemapi.yamlitem.internal.ItemLogger.warn("Failed to register modern 26.x components: " + t.getMessage());
+            }
         }
     }
 
@@ -601,13 +605,24 @@ public final class ComponentHandlers {
     }
 
     private static void mapColor(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
-        org.bukkit.Color color;
-        if (value instanceof Map || value instanceof org.bukkit.configuration.ConfigurationSection) {
-            color = ValueUtil.color(HandlerSupport.asNode(value, path), "color");
-        } else {
-            color = ValueUtil.color(value, path);
+        try {
+            org.bukkit.Color color;
+            if (value instanceof Map || value instanceof org.bukkit.configuration.ConfigurationSection) {
+                color = ValueUtil.color(HandlerSupport.asNode(value, path), "color");
+            } else {
+                color = ValueUtil.color(value, path);
+            }
+            Class<?> clazz = Class.forName("io.papermc.paper.datacomponent.item.MapItemColor");
+            java.lang.reflect.Method builderMethod = clazz.getMethod("mapItemColor");
+            Object builder = builderMethod.invoke(null);
+            java.lang.reflect.Method colorMethod = builder.getClass().getMethod("color", org.bukkit.Color.class);
+            builder = colorMethod.invoke(builder, color);
+            java.lang.reflect.Method buildMethod = builder.getClass().getMethod("build");
+            Object mapColorObj = buildMethod.invoke(builder);
+            HandlerSupport.set(stack, type, mapColorObj);
+        } catch (Throwable t) {
+            me.usainsrht.itemapi.yamlitem.internal.ItemLogger.warn("Failed to apply map_color at path '" + path + "': " + t.getMessage());
         }
-        HandlerSupport.set(stack, type, MapItemColor.mapItemColor().color(color).build());
     }
 
     private static void dyedColor(ItemStack stack, DataComponentType type, Object value, String path, me.usainsrht.itemapi.yamlitem.YamlItemParser parser) {
