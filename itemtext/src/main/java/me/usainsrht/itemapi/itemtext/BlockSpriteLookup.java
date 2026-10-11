@@ -1,7 +1,9 @@
 package me.usainsrht.itemapi.itemtext;
 
+import org.bukkit.Material;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -63,7 +65,7 @@ final class BlockSpriteLookup {
         }
 
         String special = SPECIALS.get(itemName);
-        if (special != null && BlockAtlasSprites.contains(special)) {
+        if (special != null && (BlockAtlasSprites.contains(special) || isKnownMaterial(special))) {
             return special;
         }
 
@@ -85,7 +87,7 @@ final class BlockSpriteLookup {
         }
 
         String derived = derive(itemName);
-        if (derived != null && BlockAtlasSprites.contains(derived)) {
+        if (derived != null && (BlockAtlasSprites.contains(derived) || isKnownMaterial(derived))) {
             return derived;
         }
 
@@ -205,6 +207,9 @@ final class BlockSpriteLookup {
                 if ("brick".equals(base) || base.endsWith("_brick")) {
                     yield base + "s";
                 }
+                if (isKnownMaterial(base + "_block")) {
+                    yield base + "_block";
+                }
                 yield base;
             }
         };
@@ -214,6 +219,21 @@ final class BlockSpriteLookup {
         if (WOOD.contains(wood)) {
             return wood + "_planks";
         }
+        String candidate = wood + "_planks";
+        if (BlockAtlasSprites.contains(candidate) || isKnownMaterial(candidate)) {
+            return candidate;
+        }
         return null;
+    }
+
+    static boolean isKnownMaterial(@Nullable String name) {
+        if (name == null || name.isEmpty()) {
+            return false;
+        }
+        try {
+            return Material.getMaterial(name.toUpperCase(Locale.ROOT)) != null;
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 }

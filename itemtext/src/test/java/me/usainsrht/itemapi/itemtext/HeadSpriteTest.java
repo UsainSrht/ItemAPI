@@ -234,6 +234,39 @@ class HeadSpriteTest {
         assertEquals("minecraft:block/straw_bed_head_up", strawBed.sprite().asString());
     }
 
+    @Test
+    void testAutomatedForwardCompatibilityRouting() {
+        // Dynamic material recognition
+        assertTrue(BlockSpriteLookup.isKnownMaterial("poplar_planks"));
+        assertFalse(BlockSpriteLookup.isKnownMaterial("fictional_wood_planks_xyz"));
+
+        // Doors and signs pattern checks for future wood types
+        assertTrue(ItemSpriteFactory.isItemTextureBlock("willow_door"));
+        assertFalse(ItemSpriteFactory.isItemTextureBlock("willow_trapdoor"));
+        assertTrue(ItemSpriteFactory.isItemTextureBlock("willow_sign"));
+        assertTrue(ItemSpriteFactory.isItemTextureBlock("willow_hanging_sign"));
+        assertTrue(ItemSpriteFactory.isItemTextureBlock("copper_lantern"));
+
+        // Items and item-texture blocks resolved to items atlas
+        SpriteTarget doorTarget = ItemSpriteFactory.resolve(stubItem(Material.POPLAR_DOOR), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, doorTarget);
+        ItemSpriteOverrides.SpriteRef doorRef = (ItemSpriteOverrides.SpriteRef) doorTarget;
+        assertEquals("minecraft:items", doorRef.atlas().asString());
+        assertEquals("minecraft:item/poplar_door", doorRef.sprite().asString());
+
+        SpriteTarget signTarget = ItemSpriteFactory.resolve(stubItem(Material.POPLAR_SIGN), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, signTarget);
+        ItemSpriteOverrides.SpriteRef signRef = (ItemSpriteOverrides.SpriteRef) signTarget;
+        assertEquals("minecraft:items", signRef.atlas().asString());
+        assertEquals("minecraft:item/poplar_sign", signRef.sprite().asString());
+
+        SpriteTarget boatTarget = ItemSpriteFactory.resolve(stubItem(Material.POPLAR_BOAT), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, boatTarget);
+        ItemSpriteOverrides.SpriteRef boatRef = (ItemSpriteOverrides.SpriteRef) boatTarget;
+        assertEquals("minecraft:items", boatRef.atlas().asString());
+        assertEquals("minecraft:item/poplar_boat", boatRef.sprite().asString());
+    }
+
     private ItemStack stubItem(Material material) {
         return new ItemStack() {
             @Override

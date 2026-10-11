@@ -11,6 +11,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ItemType;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Locale;
+
 final class ItemSpriteFactory {
 
     private static final Key ITEMS_ATLAS = Key.key("minecraft", "items");
@@ -107,13 +109,13 @@ final class ItemSpriteFactory {
         }
     }
 
-    private static SpriteTarget resolve(ItemStack item, ItemTextOptions options) {
+    static SpriteTarget resolve(ItemStack item, ItemTextOptions options) {
         Key itemModel = getItemModel(item);
         if (itemModel != null) {
             return fromModelKey(itemModel, options);
         }
 
-        return fromItemKey(itemKey(item), options);
+        return fromItemKey(item, itemKey(item), options);
     }
 
     private static Key itemKey(ItemStack item) {
@@ -127,7 +129,7 @@ final class ItemSpriteFactory {
         return item.getType().getKey();
     }
 
-    private static SpriteTarget fromItemKey(Key itemKey, ItemTextOptions options) {
+    private static SpriteTarget fromItemKey(ItemStack item, Key itemKey, ItemTextOptions options) {
         String name = itemKey.value();
 
         if (options.usePlayerHeadsFor3DBlocks()) {
@@ -143,6 +145,14 @@ final class ItemSpriteFactory {
         }
 
         if (ItemAtlasSprites.contains(name)) {
+            return itemSprite(itemKey.namespace(), name);
+        }
+
+        if (isNonBlockItem(item.getType())) {
+            return itemSprite(itemKey.namespace(), name);
+        }
+
+        if (isItemTextureBlock(name)) {
             return itemSprite(itemKey.namespace(), name);
         }
 
@@ -175,8 +185,42 @@ final class ItemSpriteFactory {
             return itemSprite(itemModel.namespace(), value);
         }
 
+        Material material = Material.getMaterial(value.toUpperCase(Locale.ROOT));
+        if (isNonBlockItem(material)) {
+            return itemSprite(itemModel.namespace(), value);
+        }
+
+        if (isItemTextureBlock(value)) {
+            return itemSprite(itemModel.namespace(), value);
+        }
+
         String blockSprite = BlockSpriteLookup.resolve(value);
         return blockSprite(itemModel.namespace(), blockSprite);
+    }
+
+    private static boolean isNonBlockItem(@Nullable Material material) {
+        if (material == null) {
+            return false;
+        }
+        try {
+            return !material.isBlock();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    static boolean isItemTextureBlock(String name) {
+        if (name.endsWith("_door") && !name.endsWith("_trapdoor")) {
+            return true;
+        }
+        if (name.endsWith("_sign")) {
+            return true;
+        }
+        if (name.endsWith("_chain") || name.endsWith("_lantern") || name.endsWith("campfire")
+                || name.endsWith("_candle") || "candle".equals(name)) {
+            return true;
+        }
+        return false;
     }
 
     private static ItemSpriteOverrides.SpriteRef itemSprite(String namespace, String name) {
