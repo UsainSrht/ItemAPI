@@ -15,7 +15,7 @@ final class BlockSpriteLookup {
 
     private static final Set<String> WOOD = Set.of(
             "acacia", "bamboo", "birch", "cherry", "crimson", "dark_oak",
-            "jungle", "mangrove", "oak", "pale_oak", "spruce", "warped"
+            "jungle", "mangrove", "oak", "pale_oak", "poplar", "spruce", "warped"
     );
 
     /**

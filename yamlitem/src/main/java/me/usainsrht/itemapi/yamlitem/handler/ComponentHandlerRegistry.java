@@ -26,6 +26,7 @@ public final class ComponentHandlerRegistry {
         indexTypes();
         registerAlias("enchants", "enchantments");
         registerAlias("stored_enchants", "stored_enchantments");
+        registerAlias("swing_animation", "attack_animation");
         ComponentHandlers.registerAll(this);
     }
 
@@ -63,9 +64,15 @@ public final class ComponentHandlerRegistry {
 
     private void registerId(DataComponentType type) {
         NamespacedKey key = type.getKey();
-        byId.put(key.getKey(), type);
+        String rawKey = key.getKey();
+        byId.put(rawKey, type);
         byId.put(key.toString(), type);
-        byId.put(key.getKey().replace('_', '-'), type);
+        byId.put(rawKey.replace('_', '-'), type);
+        if (rawKey.contains("/")) {
+            byId.put(rawKey.replace('/', '_'), type);
+            byId.put(rawKey.replace('/', '-'), type);
+            byId.put("minecraft:" + rawKey.replace('/', '_'), type);
+        }
     }
 
     public void register(DataComponentType type, ComponentHandler handler) {

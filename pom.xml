@@ -22,7 +22,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
-        <paper.version>26.2.build.65-beta</paper.version>
+        <paper.version>26.3.build.170-beta</paper.version>
         <miniplaceholders.version>3.2.0</miniplaceholders.version>
     </properties>
 

@@ -210,6 +210,30 @@ class HeadSpriteTest {
         assertEquals("{\"atlas\":\"minecraft:gui\",\"sprite\":\"minecraft:mob_effect/resistance\"}", serialized);
     }
 
+    @Test
+    void testWildernessBound263Lookups() {
+        // Poplar wood pattern derivation
+        assertEquals("poplar_planks", BlockSpriteLookup.resolve("poplar_stairs"));
+        assertEquals("poplar_planks", BlockSpriteLookup.resolve("poplar_slab"));
+        assertEquals("poplar_planks", BlockSpriteLookup.resolve("poplar_fence"));
+        assertEquals("poplar_planks", BlockSpriteLookup.resolve("poplar_fence_gate"));
+        assertEquals("poplar_planks", BlockSpriteLookup.resolve("poplar_button"));
+        assertEquals("poplar_planks", BlockSpriteLookup.resolve("poplar_pressure_plate"));
+        assertEquals("poplar_log", BlockSpriteLookup.resolve("poplar_wood"));
+        assertEquals("stripped_poplar_log", BlockSpriteLookup.resolve("stripped_poplar_wood"));
+
+        // Wool and Concrete stairs/slabs
+        assertEquals("red_wool", BlockSpriteLookup.resolve("red_wool_stairs"));
+        assertEquals("red_wool", BlockSpriteLookup.resolve("red_wool_slab"));
+        assertEquals("blue_concrete", BlockSpriteLookup.resolve("blue_concrete_stairs"));
+        assertEquals("blue_concrete", BlockSpriteLookup.resolve("blue_concrete_slab"));
+
+        // Straw bed override
+        ItemSpriteOverrides.SpriteRef strawBed = ItemSpriteOverrides.sprite("straw_bed");
+        assertNotNull(strawBed);
+        assertEquals("minecraft:block/straw_bed_head_up", strawBed.sprite().asString());
+    }
+
     private ItemStack stubItem(Material material) {
         return new ItemStack() {
             @Override

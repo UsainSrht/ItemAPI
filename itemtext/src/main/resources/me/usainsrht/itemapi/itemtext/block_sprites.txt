@@ -97,6 +97,7 @@ black_candle
 black_candle_lit
 black_concrete
 black_concrete_powder
+black_cushion
 black_glazed_terracotta
 black_shulker_box
 black_stained_glass
@@ -120,6 +121,7 @@ blue_candle
 blue_candle_lit
 blue_concrete
 blue_concrete_powder
+blue_cushion
 blue_glazed_terracotta
 blue_ice
 blue_orchid
@@ -148,6 +150,7 @@ brown_candle
 brown_candle_lit
 brown_concrete
 brown_concrete_powder
+brown_cushion
 brown_glazed_terracotta
 brown_mushroom
 brown_mushroom_block
@@ -331,6 +334,7 @@ cyan_candle
 cyan_candle_lit
 cyan_concrete
 cyan_concrete_powder
+cyan_cushion
 cyan_glazed_terracotta
 cyan_shulker_box
 cyan_stained_glass
@@ -517,6 +521,7 @@ gray_candle
 gray_candle_lit
 gray_concrete
 gray_concrete_powder
+gray_cushion
 gray_glazed_terracotta
 gray_shulker_box
 gray_stained_glass
@@ -534,6 +539,7 @@ green_candle
 green_candle_lit
 green_concrete
 green_concrete_powder
+green_cushion
 green_glazed_terracotta
 green_shulker_box
 green_stained_glass
@@ -612,6 +618,7 @@ light_blue_candle
 light_blue_candle_lit
 light_blue_concrete
 light_blue_concrete_powder
+light_blue_cushion
 light_blue_glazed_terracotta
 light_blue_shulker_box
 light_blue_stained_glass
@@ -629,6 +636,7 @@ light_gray_candle
 light_gray_candle_lit
 light_gray_concrete
 light_gray_concrete_powder
+light_gray_cushion
 light_gray_glazed_terracotta
 light_gray_shulker_box
 light_gray_stained_glass
@@ -652,6 +660,7 @@ lime_candle
 lime_candle_lit
 lime_concrete
 lime_concrete_powder
+lime_cushion
 lime_glazed_terracotta
 lime_shulker_box
 lime_stained_glass
@@ -675,6 +684,7 @@ magenta_candle
 magenta_candle_lit
 magenta_concrete
 magenta_concrete_powder
+magenta_cushion
 magenta_glazed_terracotta
 magenta_shulker_box
 magenta_stained_glass
@@ -755,7 +765,9 @@ orange_candle
 orange_candle_lit
 orange_concrete
 orange_concrete_powder
+orange_cushion
 orange_glazed_terracotta
+orange_poplar_leaves
 orange_shulker_box
 orange_stained_glass
 orange_stained_glass_pane_top
@@ -812,6 +824,7 @@ pink_candle
 pink_candle_lit
 pink_concrete
 pink_concrete_powder
+pink_cushion
 pink_glazed_terracotta
 pink_petals
 pink_petals_stem
@@ -858,6 +871,17 @@ polished_diorite
 polished_granite
 polished_sulfur
 polished_tuff
+poplar_door_bottom
+poplar_door_top
+poplar_hanging_sign
+poplar_leaves
+poplar_log
+poplar_log_top
+poplar_planks
+poplar_sapling
+poplar_shelf
+poplar_sign
+poplar_trapdoor
 poppy
 potatoes_stage0
 potatoes_stage1
@@ -889,6 +913,7 @@ purple_candle
 purple_candle_lit
 purple_concrete
 purple_concrete_powder
+purple_cushion
 purple_glazed_terracotta
 purple_shulker_box
 purple_stained_glass
@@ -920,14 +945,17 @@ red_candle
 red_candle_lit
 red_concrete
 red_concrete_powder
+red_cushion
 red_glazed_terracotta
 red_mushroom
 red_mushroom_block
 red_nether_bricks
+red_poplar_leaves
 red_sand
 red_sandstone
 red_sandstone_bottom
 red_sandstone_top
+red_shrub
 red_shulker_box
 red_stained_glass
 red_stained_glass_pane_top
@@ -994,6 +1022,7 @@ sculk_vein
 sea_lantern
 sea_pickle
 seagrass
+shelf_mushroom
 short_dry_grass
 short_grass
 shroomlight
@@ -1064,6 +1093,13 @@ stonecutter_bottom
 stonecutter_saw
 stonecutter_side
 stonecutter_top
+straw_bed_foot_east
+straw_bed_foot_south
+straw_bed_foot_up
+straw_bed_foot_west
+straw_bed_head_east
+straw_bed_head_up
+straw_bed_head_west
 stripped_acacia_log
 stripped_acacia_log_top
 stripped_bamboo_block
@@ -1084,6 +1120,8 @@ stripped_oak_log
 stripped_oak_log_top
 stripped_pale_oak_log
 stripped_pale_oak_log_top
+stripped_poplar_log
+stripped_poplar_log_top
 stripped_spruce_log
 stripped_spruce_log_top
 stripped_warped_stem
@@ -1240,6 +1278,7 @@ white_candle
 white_candle_lit
 white_concrete
 white_concrete_powder
+white_cushion
 white_glazed_terracotta
 white_shulker_box
 white_stained_glass
@@ -1261,7 +1300,9 @@ yellow_candle
 yellow_candle_lit
 yellow_concrete
 yellow_concrete_powder
+yellow_cushion
 yellow_glazed_terracotta
+yellow_poplar_leaves
 yellow_shulker_box
 yellow_stained_glass
 yellow_stained_glass_pane_top

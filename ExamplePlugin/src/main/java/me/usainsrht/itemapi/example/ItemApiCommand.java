@@ -89,7 +89,7 @@ public final class ItemApiCommand implements CommandExecutor, TabCompleter {
                 continue;
             }
 
-            Component name = Component.translatable(itemType.getTranslationKey())
+            Component name = Component.translatable(itemType.translationKey())
                     .append(Component.text(" (" + itemType.key().asString() + ")", NamedTextColor.DARK_GRAY));
 
             Component sprite = ItemText.format(stack, options -> options.pattern("<item_sprite>"))

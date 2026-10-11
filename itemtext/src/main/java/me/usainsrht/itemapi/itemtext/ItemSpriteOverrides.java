@@ -83,6 +83,7 @@ final class ItemSpriteOverrides {
         for (String color : colors()) {
             putBlock(map, color + "_bed", color + "_bed_head_up");
         }
+        putBlock(map, "straw_bed", "straw_bed_head_up");
 
         // Heads / skulls (3D) — approximate recognizable blocks
         putBlock(map, "skeleton_skull", "bone_block_side");

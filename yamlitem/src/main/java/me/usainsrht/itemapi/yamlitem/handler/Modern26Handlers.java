@@ -5,25 +5,33 @@ import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.AttackRange;
 import io.papermc.paper.datacomponent.item.BlocksAttacks;
 import io.papermc.paper.datacomponent.item.KineticWeapon;
+import io.papermc.paper.datacomponent.item.MobVisibility;
 import io.papermc.paper.datacomponent.item.PiercingWeapon;
+import io.papermc.paper.datacomponent.item.SignText;
 import io.papermc.paper.datacomponent.item.SulfurCubeContent;
 import io.papermc.paper.datacomponent.item.SwingAnimation;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import io.papermc.paper.datacomponent.item.UseEffects;
+import io.papermc.paper.datacomponent.item.VillagerFood;
 import io.papermc.paper.datacomponent.item.Weapon;
 import io.papermc.paper.datacomponent.item.blocksattacks.DamageReduction;
 import io.papermc.paper.datacomponent.item.blocksattacks.ItemDamageFunction;
 import io.papermc.paper.registry.RegistryKey;
+import io.papermc.paper.registry.set.RegistryKeySet;
+import io.papermc.paper.registry.set.RegistrySet;
 import me.usainsrht.itemapi.yamlitem.YamlItemParser;
 import me.usainsrht.itemapi.yamlitem.internal.RegistryUtil;
 import me.usainsrht.itemapi.yamlitem.internal.ValueUtil;
 import me.usainsrht.itemapi.yamlitem.internal.YamlNode;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import org.bukkit.DyeColor;
 import org.bukkit.Registry;
 import org.bukkit.entity.Axolotl;
 import org.bukkit.entity.Cat;
 import org.bukkit.entity.Chicken;
 import org.bukkit.entity.Cow;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fox;
 import org.bukkit.entity.Frog;
 import org.bukkit.entity.Horse;
@@ -39,6 +47,7 @@ import org.bukkit.entity.Wolf;
 import org.bukkit.entity.ZombieNautilus;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,12 +68,23 @@ public final class Modern26Handlers {
         registerIfPresent(registry, "attack_range", Modern26Handlers::attackRange);
         registerIfPresent(registry, "piercing_weapon", Modern26Handlers::piercingWeapon);
         registerIfPresent(registry, "kinetic_weapon", Modern26Handlers::kineticWeapon);
+        registerIfPresent(registry, "attack_animation", Modern26Handlers::swingAnimation);
+        registerIfPresent(registry, "interact_animation", Modern26Handlers::swingAnimation);
         registerIfPresent(registry, "swing_animation", Modern26Handlers::swingAnimation);
         registerIfPresent(registry, "weapon", Modern26Handlers::weapon);
         registerIfPresent(registry, "use_effects", Modern26Handlers::useEffects);
         registerIfPresent(registry, "tooltip_display", Modern26Handlers::tooltipDisplay);
         registerIfPresent(registry, "sulfur_cube_content", (stack, type, value, path, parser) ->
                 HandlerSupport.set(stack, type, SulfurCubeContent.sulfurCubeContent(parser.parseNestedItem(value, path))));
+
+        registerIfPresent(registry, "mob_visibility", Modern26Handlers::mobVisibility);
+        registerIfPresent(registry, "villager_food", Modern26Handlers::villagerFood);
+        registerIfPresent(registry, "sign_text_front", Modern26Handlers::signText);
+        registerIfPresent(registry, "sign_text_back", Modern26Handlers::signText);
+        registerIfPresent(registry, "waxed", ComponentHandlers.flag());
+        registerIfPresent(registry, "cushion_color", ComponentHandlers.dyeColor());
+        registerIfPresent(registry, "provides_pottery_pattern", (stack, type, value, path, parser) ->
+                HandlerSupport.set(stack, type, RegistryUtil.require(RegistryKey.DECORATED_POT_PATTERN, value, path)));
 
         registerIfPresent(registry, "minimum_attack_charge", ComponentHandlers.floatValue());
         registerIfPresent(registry, "potion_duration_scale", ComponentHandlers.floatValue());
@@ -325,6 +345,73 @@ public final class Modern26Handlers {
             builder.hiddenComponents(hidden);
         } else if (existing != null) {
             builder.hiddenComponents(existing.hiddenComponents());
+        }
+        HandlerSupport.set(stack, type, builder.build());
+    }
+
+    private static void mobVisibility(ItemStack stack, DataComponentType type, Object value, String path, YamlItemParser parser) {
+        if (value instanceof Number num) {
+            HandlerSupport.set(stack, type, MobVisibility.mobVisibility(
+                    RegistrySet.keySet(RegistryKey.ENTITY_TYPE, List.of()),
+                    num.floatValue()
+            ));
+            return;
+        }
+        YamlNode node = HandlerSupport.asNode(value, path);
+        float visibility = ValueUtil.floatOr(node, "visibility", 1f);
+        RegistryKeySet<EntityType> targeting;
+        if (node.contains("targeting_entity_types")) {
+            targeting = RegistryUtil.keySet(RegistryKey.ENTITY_TYPE, node, "targeting_entity_types");
+        } else if (node.contains("targeting_entity")) {
+            targeting = RegistryUtil.keySet(RegistryKey.ENTITY_TYPE, node, "targeting_entity");
+        } else if (node.contains("types")) {
+            targeting = RegistryUtil.keySet(RegistryKey.ENTITY_TYPE, node, "types");
+        } else {
+            targeting = RegistrySet.keySet(RegistryKey.ENTITY_TYPE, List.of());
+        }
+        HandlerSupport.set(stack, type, MobVisibility.mobVisibility(targeting, visibility));
+    }
+
+    private static void villagerFood(ItemStack stack, DataComponentType type, Object value, String path, YamlItemParser parser) {
+        int nutrition;
+        if (value instanceof Number num) {
+            nutrition = num.intValue();
+        } else {
+            YamlNode node = HandlerSupport.asNode(value, path);
+            nutrition = ValueUtil.intOr(node, "nutrition", 1);
+        }
+        HandlerSupport.set(stack, type, VillagerFood.villagerFood(nutrition));
+    }
+
+    private static void signText(ItemStack stack, DataComponentType type, Object value, String path, YamlItemParser parser) {
+        SignText.Builder builder = SignText.signText();
+        if (value instanceof List<?> list) {
+            List<Component> lines = new ArrayList<>();
+            for (int i = 0; i < list.size(); i++) {
+                lines.add(HandlerSupport.component(list.get(i), path + "[" + i + "]", parser));
+            }
+            builder.lines(lines);
+        } else if (value instanceof String || value instanceof Number || value instanceof Boolean) {
+            builder.lines(List.of(HandlerSupport.component(value, path, parser)));
+        } else {
+            YamlNode node = HandlerSupport.asNode(value, path);
+            if (node.contains("lines")) {
+                List<Component> lines = new ArrayList<>();
+                List<?> list = node.list("lines");
+                for (int i = 0; i < list.size(); i++) {
+                    lines.add(HandlerSupport.component(list.get(i), node.childPath("lines") + "[" + i + "]", parser));
+                }
+                builder.lines(lines);
+            } else if (node.contains("text")) {
+                builder.lines(List.of(HandlerSupport.component(node.raw("text"), node.childPath("text"), parser)));
+            }
+            if (node.contains("color")) {
+                builder.color(ValueUtil.enumValue(node, "color", DyeColor.class));
+            }
+            if (node.contains("has_glowing_text") || node.contains("glowing")) {
+                String glowingKey = node.contains("has_glowing_text") ? "has_glowing_text" : "glowing";
+                builder.hasGlowingText(ValueUtil.boolOr(node, glowingKey, true));
+            }
         }
         HandlerSupport.set(stack, type, builder.build());
     }

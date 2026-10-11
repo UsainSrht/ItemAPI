@@ -900,6 +900,36 @@ variants_registry:
 
 Exact registry ids depend on your Minecraft / Paper version.
 
+### Modern 26.3 components
+
+```yaml
+wilderness_bound_demo:
+  material: copper_block
+  waxed: true
+  components:
+    attack_animation:
+      type: STAB
+      duration: 10
+    interact_animation:
+      type: NONE
+      duration: 6
+    villager_food: 3
+    mob_visibility:
+      targeting_entity_types: [zombie, skeleton]
+      visibility: 0.5
+    cushion_color: red
+    provides_pottery_pattern: angler
+    sign_text_front:
+      lines:
+        - "<gold>Welcome"
+        - "<yellow>Traveler"
+      color: yellow
+      glowing: true
+    sign_text_back:
+      lines:
+        - "<gray>Come back soon!"
+```
+
 ---
 
 ## Unsetting components
