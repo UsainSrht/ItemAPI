@@ -67,6 +67,46 @@ public final class MobHeadRegistry {
     }
 
     /**
+     * Creates a player head component for the given {@link org.bukkit.entity.Entity} with hat enabled.
+     */
+    public static Component create(org.bukkit.entity.Entity entity) {
+        return create(entity, true);
+    }
+
+    /**
+     * Creates a player head component for the given {@link org.bukkit.entity.Entity} with explicit hat layer control.
+     */
+    public static Component create(org.bukkit.entity.Entity entity, boolean hat) {
+        if (entity == null) {
+            return Component.empty();
+        }
+        if (entity instanceof org.bukkit.entity.Player player) {
+            return createPlayer(player, hat);
+        }
+        return create(entity.getType(), hat);
+    }
+
+    private static Component createPlayer(org.bukkit.entity.Player player, boolean hat) {
+        if (!OBJECT_CONTENTS_SUPPORTED) {
+            return Component.empty();
+        }
+        var builder = ObjectContents.playerHead()
+                .id(player.getUniqueId())
+                .name(player.getName())
+                .hat(hat);
+        try {
+            com.destroystokyo.paper.profile.PlayerProfile profile = player.getPlayerProfile();
+            for (com.destroystokyo.paper.profile.ProfileProperty prop : profile.getProperties()) {
+                if ("textures".equalsIgnoreCase(prop.getName())) {
+                    builder.profileProperty(PlayerHeadObjectContents.property("textures", prop.getValue()));
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return Component.object(builder.build());
+    }
+
+    /**
      * Creates a player head component for the given {@link EntityType} with hat enabled.
      */
     public static Component create(EntityType entityType) {

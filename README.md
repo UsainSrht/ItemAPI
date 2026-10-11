@@ -83,7 +83,14 @@ ItemTextOptions fromConfig = ItemTextOptions.fromConfig(config.getConfigurationS
 ContentLoreOptions loreFromConfig = ContentLoreOptions.fromConfig(config.getConfigurationSection("container-lore"));
 ItemText.setDefaultOptions(fromConfig);
 
-// 6. Mob Head Component API
+// 6. Mob Head & Entity Formatting API
+Component zombie = ItemText.format(entity); // Formats Entity: mob sprite + subscript amount + custom name/translation
+Component zombies = ItemText.format(entity, 5); // Overloaded with amount: [ 👤₅ Zombie ]
+Component cow = ItemText.format(EntityType.COW); // Formats EntityType with translatable key
+Component cows = ItemText.format(EntityType.COW, 10); // EntityType with amount
+Component warden = ItemText.format("warden", 1, b -> b.mobHeadHat(false)); // With options (e.g. hat disabled)
+
+// 7. Raw Mob Head Sprite Component API
 Component zombieHead = ItemText.mobHead(EntityType.ZOMBIE); // default with hat
 Component creeperHead = ItemText.mobHead("creeper");
 Component wardenNoHat = ItemText.mobHead("warden", false); // outer hat layer disabled
@@ -210,10 +217,11 @@ MiniPlaceholders v3 expansion provider exposing `<item_hand:...>`, `<item_offhan
 - `sprite_color:<color>`: Sprite color tint (named color, hex `#RRGGBB`, or `none`)
 - `hover` / `no_hover`: Enable/disable item hover details
 
-#### Mob Head Placeholders
+#### Mob Head & Formatted Mob Placeholders
 
 - `<mob_head:<entity>>` or `<item_mob_head:<entity>>`: Renders the entity's face player head component (e.g. `<mob_head:zombie>`, `<mob_head:creeper>`).
 - `<mob_head:<entity>:<hat>>`: Control outer hat layer (`true`/`false`, `no_hat`, e.g. `<mob_head:warden:false>`).
+- `<item_mob:<entity>[:amount][:options...]>` / `<mob_format:<entity>[:amount][:options...]>`: Full formatted mob head output (sprite + subscript amount + name/translation) supporting all options (e.g. `<item_mob:zombie:5:brackets>`, `<mob_format:creeper:10:superscript>`).
 
 #### MiniMessage Usage Examples
 
@@ -222,6 +230,7 @@ You are holding: <item_hand>
 Offhand item: <item_offhand:brackets:shadow:superscript>
 Styled hand item: <item_hand:sprite_color:gold:shadow_color:#000000>
 Mob faces: <mob_head:creeper> Watch out! <mob_head:warden:no_hat>
+Formatted mobs: <item_mob:zombie:5:brackets> and <mob_format:warden:1:no_hat>
 ```
 
 ---

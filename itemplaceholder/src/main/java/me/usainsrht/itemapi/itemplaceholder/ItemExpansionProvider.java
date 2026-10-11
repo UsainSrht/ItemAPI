@@ -50,6 +50,7 @@ public final class ItemExpansionProvider implements ExpansionProvider {
                     .author("UsainSRHT")
                     .version("1.0.0")
                     .globalPlaceholder("head", (queue, ctx) -> mobHeadTag(queue))
+                    .globalPlaceholder("format", (queue, ctx) -> formatMobTag(queue))
                     .build()
                     .register();
         } catch (Throwable ignored) {
@@ -64,6 +65,7 @@ public final class ItemExpansionProvider implements ExpansionProvider {
                 .audiencePlaceholder(Player.class, "offhand", (player, queue, ctx) ->
                         Tag.selfClosingInserting(format(player, EquipmentSlot.OFF_HAND, queue)))
                 .globalPlaceholder("mob_head", (queue, ctx) -> mobHeadTag(queue))
+                .globalPlaceholder("mob", (queue, ctx) -> formatMobTag(queue))
                 .build();
     }
 
@@ -80,6 +82,24 @@ public final class ItemExpansionProvider implements ExpansionProvider {
             }
         }
         return Tag.selfClosingInserting(ItemText.mobHead(entityKey, hat));
+    }
+
+    private static Tag formatMobTag(ArgumentQueue queue) {
+        if (!queue.hasNext()) {
+            return Tag.selfClosingInserting(Component.empty());
+        }
+        String entityKey = queue.pop().value();
+        int amount = 1;
+        if (queue.hasNext()) {
+            String next = queue.peek().value();
+            try {
+                amount = Integer.parseInt(next);
+                queue.pop();
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        ItemTextOptions options = optionsFromArgs(queue);
+        return Tag.selfClosingInserting(ItemText.format(entityKey, amount, options));
     }
 
     @Override
@@ -123,6 +143,8 @@ public final class ItemExpansionProvider implements ExpansionProvider {
                 case "show_one", "force_amount" -> builder.showAmountWhenOne(true);
                 case "shadow" -> builder.shadowEnabled(true);
                 case "no_shadow" -> builder.shadowEnabled(false);
+                case "hat" -> builder.mobHeadHat(true);
+                case "no_hat", "nohat", "off_hat" -> builder.mobHeadHat(false);
                 case "hover" -> builder.hoverEnabled(true);
                 case "no_hover" -> builder.hoverEnabled(false);
                 case "bundle" -> builder.containerShowAsBundle(true);

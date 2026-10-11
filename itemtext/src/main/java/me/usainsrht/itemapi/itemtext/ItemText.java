@@ -1,7 +1,9 @@
 package me.usainsrht.itemapi.itemtext;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.ShadowColor;
 import net.kyori.adventure.text.format.TextColor;
@@ -11,14 +13,17 @@ import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.ArgumentQueue;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.UnaryOperator;
 
 /**
@@ -70,22 +75,204 @@ public final class ItemText {
         return format(item, defaultOptions);
     }
 
+    public static Component format(ItemStack item, int amount) {
+        return format(item, defaultOptions.toBuilder().amount(amount).build());
+    }
+
+    public static Component format(ItemStack item, int amount, ItemTextOptions options) {
+        Objects.requireNonNull(options, "options");
+        return format(item, options.toBuilder().amount(amount).build());
+    }
+
+    public static Component format(ItemStack item, int amount, UnaryOperator<ItemTextOptions.Builder> configurator) {
+        Objects.requireNonNull(configurator, "configurator");
+        return format(item, configurator.apply(defaultOptions.toBuilder()).amount(amount).build());
+    }
+
     public static Component format(ItemStack item, ItemTextOptions options) {
         Objects.requireNonNull(item, "item");
         Objects.requireNonNull(options, "options");
 
-        if (item.getType().isAir() || item.getAmount() <= 0) {
+        int effectiveAmount = options.amount() != null ? options.amount() : item.getAmount();
+        if (item.getType().isAir() || effectiveAmount <= 0) {
             return Component.empty();
         }
 
-        // subscript_number follows amountDisplay so the default pattern honors options
+        Component sprite = sprite(item, options);
+        Component name = displayName(item, options);
+        Component result = renderPattern(sprite, name, effectiveAmount, options);
+
+        if (options.hoverEnabled()) {
+            try {
+                // Determine base hover item (bundle representation or original)
+                ItemStack baseHoverItem = options.containerShowAsBundle()
+                        ? ContainerLore.toBundle(item)
+                        : item;
+
+                // If content lore preview is enabled and the item is a container, generate preview lore
+                if (options.contentLore() != null && options.contentLore().enabled() && ContainerLore.isContainer(item)) {
+                    // Clone to avoid mutating original item
+                    ItemStack previewItem = baseHoverItem.clone();
+                    // Render lore lines (one Component per line)
+                    List<Component> loreLines = ContainerLore.render(item, options.contentLore(), options);
+                    if (!loreLines.isEmpty()) {
+                        previewItem.lore(loreLines);
+                    }
+                    result = result.hoverEvent(previewItem);
+                } else {
+                    result = result.hoverEvent(baseHoverItem);
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        return result;
+    }
+
+    public static Component format(Entity entity) {
+        return format(entity, 1, defaultOptions);
+    }
+
+    public static Component format(Entity entity, int amount) {
+        return format(entity, amount, defaultOptions);
+    }
+
+    public static Component format(Entity entity, ItemTextOptions options) {
+        return format(entity, 1, options);
+    }
+
+    public static Component format(Entity entity, int amount, ItemTextOptions options) {
+        Objects.requireNonNull(entity, "entity");
+        Objects.requireNonNull(options, "options");
+
+        int effectiveAmount = options.amount() != null ? options.amount() : amount;
+        if (effectiveAmount <= 0) {
+            return Component.empty();
+        }
+
+        Component sprite = mobSprite(entity, options);
+        Component name = displayName(entity, options);
+        Component result = renderPattern(sprite, name, effectiveAmount, options);
+
+        if (options.hoverEnabled()) {
+            result = applyEntityHover(result, entity, name);
+        }
+        return result;
+    }
+
+    public static Component format(Entity entity, UnaryOperator<ItemTextOptions.Builder> configurator) {
+        Objects.requireNonNull(configurator, "configurator");
+        return format(entity, 1, configurator.apply(defaultOptions.toBuilder()).build());
+    }
+
+    public static Component format(Entity entity, int amount, UnaryOperator<ItemTextOptions.Builder> configurator) {
+        Objects.requireNonNull(configurator, "configurator");
+        return format(entity, amount, configurator.apply(defaultOptions.toBuilder()).build());
+    }
+
+    public static Component format(EntityType entityType) {
+        return format(entityType, 1, defaultOptions);
+    }
+
+    public static Component format(EntityType entityType, int amount) {
+        return format(entityType, amount, defaultOptions);
+    }
+
+    public static Component format(EntityType entityType, ItemTextOptions options) {
+        return format(entityType, 1, options);
+    }
+
+    public static Component format(EntityType entityType, int amount, ItemTextOptions options) {
+        Objects.requireNonNull(entityType, "entityType");
+        Objects.requireNonNull(options, "options");
+
+        int effectiveAmount = options.amount() != null ? options.amount() : amount;
+        if (effectiveAmount <= 0) {
+            return Component.empty();
+        }
+
+        Component sprite = mobSprite(entityType, options);
+        Component name = displayName(entityType, options);
+        Component result = renderPattern(sprite, name, effectiveAmount, options);
+
+        if (options.hoverEnabled()) {
+            result = applyEntityTypeHover(result, entityType, name);
+        }
+        return result;
+    }
+
+    public static Component format(EntityType entityType, UnaryOperator<ItemTextOptions.Builder> configurator) {
+        Objects.requireNonNull(configurator, "configurator");
+        return format(entityType, 1, configurator.apply(defaultOptions.toBuilder()).build());
+    }
+
+    public static Component format(EntityType entityType, int amount, UnaryOperator<ItemTextOptions.Builder> configurator) {
+        Objects.requireNonNull(configurator, "configurator");
+        return format(entityType, amount, configurator.apply(defaultOptions.toBuilder()).build());
+    }
+
+    public static Component format(String entityKey) {
+        return format(entityKey, 1, defaultOptions);
+    }
+
+    public static Component format(String entityKey, int amount) {
+        return format(entityKey, amount, defaultOptions);
+    }
+
+    public static Component format(String entityKey, ItemTextOptions options) {
+        return format(entityKey, 1, options);
+    }
+
+    public static Component format(String entityKey, int amount, ItemTextOptions options) {
+        Objects.requireNonNull(entityKey, "entityKey");
+        Objects.requireNonNull(options, "options");
+
+        int effectiveAmount = options.amount() != null ? options.amount() : amount;
+        if (effectiveAmount <= 0) {
+            return Component.empty();
+        }
+
+        Component sprite = mobSprite(entityKey, options);
+        Component name = displayName(entityKey, options);
+        Component result = renderPattern(sprite, name, effectiveAmount, options);
+
+        if (options.hoverEnabled()) {
+            result = applyEntityKeyHover(result, entityKey, name);
+        }
+        return result;
+    }
+
+    public static Component format(String entityKey, UnaryOperator<ItemTextOptions.Builder> configurator) {
+        Objects.requireNonNull(configurator, "configurator");
+        return format(entityKey, 1, configurator.apply(defaultOptions.toBuilder()).build());
+    }
+
+    public static Component format(String entityKey, int amount, UnaryOperator<ItemTextOptions.Builder> configurator) {
+        Objects.requireNonNull(configurator, "configurator");
+        return format(entityKey, amount, configurator.apply(defaultOptions.toBuilder()).build());
+    }
+
+    private static Component renderPattern(
+            Component sprite,
+            Component name,
+            int amount,
+            ItemTextOptions options
+    ) {
         TagResolver resolver = TagResolver.builder()
-                .tag("item_sprite", (args, ctx) -> Tag.selfClosingInserting(sprite(item, options)))
-                .tag("item_displayname", (args, ctx) -> Tag.selfClosingInserting(displayName(item, options)))
-                .tag("subscript_number", (args, ctx) -> amountTag(args, item, options, options.amountDisplay()))
-                .tag("superscript_number", (args, ctx) -> amountTag(args, item, options, AmountDisplay.SUPERSCRIPT))
-                .tag("normal_number", (args, ctx) -> amountTag(args, item, options, AmountDisplay.NORMAL))
-                .tag("item_amount", (args, ctx) -> amountTag(args, item, options, options.amountDisplay()))
+                .tag("item_sprite", (args, ctx) -> Tag.selfClosingInserting(sprite))
+                .tag("mob_sprite", (args, ctx) -> Tag.selfClosingInserting(sprite))
+                .tag("entity_sprite", (args, ctx) -> Tag.selfClosingInserting(sprite))
+                .tag("mob_head", (args, ctx) -> Tag.selfClosingInserting(sprite))
+                .tag("item_displayname", (args, ctx) -> Tag.selfClosingInserting(name))
+                .tag("mob_name", (args, ctx) -> Tag.selfClosingInserting(name))
+                .tag("entity_name", (args, ctx) -> Tag.selfClosingInserting(name))
+                .tag("entity_displayname", (args, ctx) -> Tag.selfClosingInserting(name))
+                .tag("mob_displayname", (args, ctx) -> Tag.selfClosingInserting(name))
+                .tag("subscript_number", (args, ctx) -> amountTag(args, amount, options, options.amountDisplay()))
+                .tag("superscript_number", (args, ctx) -> amountTag(args, amount, options, AmountDisplay.SUPERSCRIPT))
+                .tag("normal_number", (args, ctx) -> amountTag(args, amount, options, AmountDisplay.NORMAL))
+                .tag("item_amount", (args, ctx) -> amountTag(args, amount, options, options.amountDisplay()))
+                .tag("mob_amount", (args, ctx) -> amountTag(args, amount, options, options.amountDisplay()))
+                .tag("entity_amount", (args, ctx) -> amountTag(args, amount, options, options.amountDisplay()))
                 .resolver(mobHeadTagResolver())
                 .build();
 
@@ -96,26 +283,6 @@ public final class ItemText {
                     .append(result)
                     .append(Component.text(']'))
                     .build();
-        }
-        if (options.hoverEnabled()) {
-            // Determine base hover item (bundle representation or original)
-            ItemStack baseHoverItem = options.containerShowAsBundle()
-                    ? ContainerLore.toBundle(item)
-                    : item;
-
-            // If content lore preview is enabled and the item is a container, generate preview lore
-            if (options.contentLore() != null && options.contentLore().enabled() && ContainerLore.isContainer(item)) {
-                // Clone to avoid mutating original item
-                ItemStack previewItem = baseHoverItem.clone();
-                // Render lore lines (one Component per line)
-                List<Component> loreLines = ContainerLore.render(item, options.contentLore(), options);
-                if (!loreLines.isEmpty()) {
-                    previewItem.lore(loreLines);
-                }
-                result = result.hoverEvent(previewItem);
-            } else {
-                result = result.hoverEvent(baseHoverItem);
-            }
         }
         return result;
     }
@@ -130,6 +297,28 @@ public final class ItemText {
 
     private static Component sprite(ItemStack item, ItemTextOptions options) {
         Component sprite = ItemSpriteFactory.create(item, options);
+        return styleSprite(sprite, options);
+    }
+
+    private static Component mobSprite(Entity entity, ItemTextOptions options) {
+        Component sprite = MobHeadRegistry.create(entity, options.mobHeadHat());
+        return styleSprite(sprite, options);
+    }
+
+    private static Component mobSprite(EntityType entityType, ItemTextOptions options) {
+        Component sprite = MobHeadRegistry.create(entityType, options.mobHeadHat());
+        return styleSprite(sprite, options);
+    }
+
+    private static Component mobSprite(String entityKey, ItemTextOptions options) {
+        Component sprite = MobHeadRegistry.create(entityKey, options.mobHeadHat());
+        return styleSprite(sprite, options);
+    }
+
+    private static Component styleSprite(Component sprite, ItemTextOptions options) {
+        if (sprite.equals(Component.empty())) {
+            return sprite;
+        }
         TextColor color = options.spriteColor();
         if (color != null) {
             sprite = sprite.color(color);
@@ -142,9 +331,7 @@ public final class ItemText {
         return sprite;
     }
 
-    private static Tag amountTag(ArgumentQueue args, ItemStack item, ItemTextOptions options, AmountDisplay display) {
-        Integer override = options.amount();
-        int amount = override != null ? override : item.getAmount();
+    private static Tag amountTag(ArgumentQueue args, int amount, ItemTextOptions options, AmountDisplay display) {
         if (amount == 1 && !options.showAmountWhenOne()) {
             return Tag.selfClosingInserting(Component.empty());
         }
@@ -180,6 +367,131 @@ public final class ItemText {
             name = name.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
         }
         return name;
+    }
+
+    private static Component displayName(Entity entity, ItemTextOptions options) {
+        Component name = null;
+        if (options.displayCustomName()) {
+            name = entity.customName();
+        } else if (options.displayCustomNameIfHasColor()) {
+            Component customName = entity.customName();
+            if (customName != null && hasColor(customName)) {
+                name = customName;
+            }
+        }
+        if (name == null) {
+            if (entity instanceof org.bukkit.entity.Player player) {
+                name = Component.text(player.getName());
+            } else {
+                name = Component.translatable(getTranslationKey(entity.getType()));
+            }
+        }
+        if (options.displayRarityColor()) {
+            name = name.colorIfAbsent(getRarityColor(ItemRarity.COMMON));
+        }
+        if (options.removeItalic()) {
+            name = name.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+        }
+        return name;
+    }
+
+    private static Component displayName(EntityType entityType, ItemTextOptions options) {
+        Component name = Component.translatable(getTranslationKey(entityType));
+        if (options.displayRarityColor()) {
+            name = name.colorIfAbsent(getRarityColor(ItemRarity.COMMON));
+        }
+        if (options.removeItalic()) {
+            name = name.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+        }
+        return name;
+    }
+
+    private static Component displayName(String entityKey, ItemTextOptions options) {
+        String normalized = MobHeadRegistry.normalize(entityKey);
+        EntityType type = resolveEntityType(normalized);
+        Component name = type != null
+                ? Component.translatable(getTranslationKey(type))
+                : Component.translatable("entity.minecraft." + normalized);
+        if (options.displayRarityColor()) {
+            name = name.colorIfAbsent(getRarityColor(ItemRarity.COMMON));
+        }
+        if (options.removeItalic()) {
+            name = name.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+        }
+        return name;
+    }
+
+    private static String getTranslationKey(EntityType entityType) {
+        try {
+            return entityType.translationKey();
+        } catch (Throwable ignored) {
+            return "entity.minecraft." + entityType.name().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    private static @Nullable EntityType resolveEntityType(String normalized) {
+        try {
+            return EntityType.valueOf(normalized.toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            return null;
+        }
+    }
+
+    private static Component applyEntityHover(Component component, Entity entity, Component name) {
+        try {
+            var hover = entity.asHoverEvent();
+            if (hover != null) {
+                return component.hoverEvent(hover);
+            }
+        } catch (Throwable ignored) {
+        }
+        Key key;
+        try {
+            key = entity.getType().key();
+        } catch (Throwable ignored) {
+            key = Key.key("minecraft", entity.getType().name().toLowerCase(Locale.ROOT));
+        }
+        return component.hoverEvent(HoverEvent.showEntity(
+                key,
+                entity.getUniqueId(),
+                name
+        ));
+    }
+
+    private static Component applyEntityTypeHover(Component component, EntityType entityType, Component name) {
+        UUID uuid = UUID.nameUUIDFromBytes(("itemapi:entity:" + entityType.name()).getBytes(StandardCharsets.UTF_8));
+        Key key;
+        try {
+            key = entityType.key();
+        } catch (Throwable ignored) {
+            key = Key.key("minecraft", entityType.name().toLowerCase(Locale.ROOT));
+        }
+        return component.hoverEvent(HoverEvent.showEntity(
+                key,
+                uuid,
+                name
+        ));
+    }
+
+    private static Component applyEntityKeyHover(Component component, String entityKey, Component name) {
+        String normalized = MobHeadRegistry.normalize(entityKey);
+        EntityType type = resolveEntityType(normalized);
+        Key key;
+        if (type != null) {
+            try {
+                key = type.key();
+            } catch (Throwable ignored) {
+                key = Key.key("minecraft", normalized);
+            }
+        } else {
+            key = Key.key("minecraft", normalized);
+        }
+        UUID uuid = UUID.nameUUIDFromBytes(("itemapi:entity:" + normalized).getBytes(StandardCharsets.UTF_8));
+        return component.hoverEvent(HoverEvent.showEntity(
+                key,
+                uuid,
+                name
+        ));
     }
 
     private static boolean hasColor(@Nullable Component component) {
@@ -296,6 +608,27 @@ public final class ItemText {
      */
     public static ItemStack applyContainerLore(ItemStack item, ItemTextOptions options, boolean append) {
         return ContainerLore.apply(item, options, append);
+    }
+
+    /**
+     * Creates a player head component displaying the face/head of the specified entity with hat enabled.
+     *
+     * @param entity the entity
+     * @return the mob head component, or {@link Component#empty()} if unsupported or unavailable
+     */
+    public static Component mobHead(Entity entity) {
+        return MobHeadRegistry.create(entity);
+    }
+
+    /**
+     * Creates a player head component displaying the face/head of the specified entity.
+     *
+     * @param entity the entity
+     * @param hat whether the outer hat/overlay layer should be rendered
+     * @return the mob head component, or {@link Component#empty()} if unsupported or unavailable
+     */
+    public static Component mobHead(Entity entity, boolean hat) {
+        return MobHeadRegistry.create(entity, hat);
     }
 
     /**

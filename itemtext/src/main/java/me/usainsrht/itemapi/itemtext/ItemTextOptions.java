@@ -39,6 +39,7 @@ public final class ItemTextOptions {
     private final boolean hoverEnabled;
     private final boolean containerShowAsBundle;
     private final boolean usePlayerHeadsFor3DBlocks;
+    private final boolean mobHeadHat;
     private final ContentLoreOptions contentLore;
 
     private ItemTextOptions(Builder builder) {
@@ -57,6 +58,7 @@ public final class ItemTextOptions {
         this.hoverEnabled = builder.hoverEnabled;
         this.containerShowAsBundle = builder.containerShowAsBundle;
         this.usePlayerHeadsFor3DBlocks = builder.usePlayerHeadsFor3DBlocks;
+        this.mobHeadHat = builder.mobHeadHat;
         this.contentLore = builder.contentLore;
     }
 
@@ -182,6 +184,13 @@ public final class ItemTextOptions {
         return contentLore;
     }
 
+    /**
+     * Whether mob head sprites render with their outer 3D hat layer enabled (default {@code true}).
+     */
+    public boolean mobHeadHat() {
+        return mobHeadHat;
+    }
+
     public Builder toBuilder() {
         return new Builder()
                 .displayBrackets(displayBrackets)
@@ -199,6 +208,7 @@ public final class ItemTextOptions {
                 .hoverEnabled(hoverEnabled)
                 .containerShowAsBundle(containerShowAsBundle)
                 .usePlayerHeadsFor3DBlocks(usePlayerHeadsFor3DBlocks)
+                .mobHeadHat(mobHeadHat)
                 .contentLore(contentLore);
     }
 
@@ -219,6 +229,7 @@ public final class ItemTextOptions {
         private boolean hoverEnabled = true;
         private boolean containerShowAsBundle = true;
         private boolean usePlayerHeadsFor3DBlocks = true;
+        private boolean mobHeadHat = true;
         private ContentLoreOptions contentLore = ContentLoreOptions.defaults();
 
         public Builder displayBrackets(boolean displayBrackets) {
@@ -301,6 +312,11 @@ public final class ItemTextOptions {
 
         public Builder usePlayerHeadsFor3DBlocks(boolean usePlayerHeadsFor3DBlocks) {
             this.usePlayerHeadsFor3DBlocks = usePlayerHeadsFor3DBlocks;
+            return this;
+        }
+
+        public Builder mobHeadHat(boolean mobHeadHat) {
+            this.mobHeadHat = mobHeadHat;
             return this;
         }
 
@@ -551,6 +567,11 @@ public final class ItemTextOptions {
                 this.usePlayerHeadsFor3DBlocks = playerHeads;
             }
 
+            Boolean headHat = getBoolean(section, "mob-head-hat", "mob_head_hat", "mobHeadHat", "hat");
+            if (headHat != null) {
+                this.mobHeadHat = headHat;
+            }
+
             return this;
         }
 
@@ -650,6 +671,11 @@ public final class ItemTextOptions {
                     "usePlayerHeadsFor3DBlocks");
             if (playerHeads != null) {
                 this.usePlayerHeadsFor3DBlocks = playerHeads;
+            }
+
+            Boolean headHat = getMapBoolean(map, "mob-head-hat", "mob_head_hat", "mobHeadHat", "hat");
+            if (headHat != null) {
+                this.mobHeadHat = headHat;
             }
 
             return this;
