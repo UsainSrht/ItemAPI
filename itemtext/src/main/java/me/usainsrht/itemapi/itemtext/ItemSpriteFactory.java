@@ -216,7 +216,10 @@ final class ItemSpriteFactory {
         if (name.endsWith("_sign")) {
             return true;
         }
-        if (name.endsWith("_chain") || name.endsWith("_lantern") || name.endsWith("campfire")
+        if (name.endsWith("_chain")
+                || ((name.endsWith("_lantern") || "lantern".equals(name))
+                        && !"jack_o_lantern".equals(name) && !"sea_lantern".equals(name))
+                || name.endsWith("campfire")
                 || name.endsWith("_candle") || "candle".equals(name)) {
             return true;
         }

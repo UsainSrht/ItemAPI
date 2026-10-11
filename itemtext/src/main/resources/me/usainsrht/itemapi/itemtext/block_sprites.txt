@@ -1022,7 +1022,8 @@ sculk_vein
 sea_lantern
 sea_pickle
 seagrass
-shelf_mushroom
+shelf_mushroom_side
+shelf_mushroom_top
 short_dry_grass
 short_grass
 shroomlight

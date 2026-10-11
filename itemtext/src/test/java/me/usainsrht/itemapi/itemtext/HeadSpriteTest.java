@@ -236,8 +236,24 @@ class HeadSpriteTest {
 
     @Test
     void testAutomatedForwardCompatibilityRouting() {
-        // Dynamic material recognition
-        assertTrue(BlockSpriteLookup.isKnownMaterial("poplar_planks"));
+        SpriteTarget jackSprite = ItemSpriteFactory.resolve(stubItem(Material.JACK_O_LANTERN), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, jackSprite);
+        ItemSpriteOverrides.SpriteRef jackRef = (ItemSpriteOverrides.SpriteRef) jackSprite;
+        assertEquals("minecraft:blocks", jackRef.atlas().asString());
+        assertEquals("minecraft:block/jack_o_lantern", jackRef.sprite().asString());
+
+        SpriteTarget seaLanternSprite = ItemSpriteFactory.resolve(stubItem(Material.SEA_LANTERN), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, seaLanternSprite);
+        ItemSpriteOverrides.SpriteRef seaLanternRef = (ItemSpriteOverrides.SpriteRef) seaLanternSprite;
+        assertEquals("minecraft:blocks", seaLanternRef.atlas().asString());
+        assertEquals("minecraft:block/sea_lantern", seaLanternRef.sprite().asString());
+
+        SpriteTarget shelfSprite = ItemSpriteFactory.resolve(stubItem(Material.SHELF_MUSHROOM), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, shelfSprite);
+        ItemSpriteOverrides.SpriteRef shelfRef = (ItemSpriteOverrides.SpriteRef) shelfSprite;
+        assertEquals("minecraft:blocks", shelfRef.atlas().asString());
+        assertEquals("minecraft:block/shelf_mushroom_top", shelfRef.sprite().asString());
+
         assertFalse(BlockSpriteLookup.isKnownMaterial("fictional_wood_planks_xyz"));
 
         // Doors and signs pattern checks for future wood types
