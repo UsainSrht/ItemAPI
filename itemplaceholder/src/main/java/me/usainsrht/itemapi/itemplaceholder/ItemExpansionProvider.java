@@ -45,6 +45,17 @@ public final class ItemExpansionProvider implements ExpansionProvider {
 
     @Override
     public Expansion provideExpansion() {
+        try {
+            Expansion.builder("mob")
+                    .author("UsainSRHT")
+                    .version("1.0.0")
+                    .globalPlaceholder("head", (queue, ctx) -> mobHeadTag(queue))
+                    .build()
+                    .register();
+        } catch (Throwable ignored) {
+            // allow fallback if standalone registration is unsupported
+        }
+
         return Expansion.builder("item")
                 .author("UsainSRHT")
                 .version("1.0.0")
@@ -52,7 +63,23 @@ public final class ItemExpansionProvider implements ExpansionProvider {
                         Tag.selfClosingInserting(format(player, EquipmentSlot.HAND, queue)))
                 .audiencePlaceholder(Player.class, "offhand", (player, queue, ctx) ->
                         Tag.selfClosingInserting(format(player, EquipmentSlot.OFF_HAND, queue)))
+                .globalPlaceholder("mob_head", (queue, ctx) -> mobHeadTag(queue))
                 .build();
+    }
+
+    private static Tag mobHeadTag(ArgumentQueue queue) {
+        if (!queue.hasNext()) {
+            return Tag.selfClosingInserting(Component.empty());
+        }
+        String entityKey = queue.pop().value();
+        boolean hat = true;
+        if (queue.hasNext()) {
+            String hatArg = queue.pop().lowerValue();
+            if (hatArg.equals("false") || hatArg.equals("no_hat") || hatArg.equals("nohat") || hatArg.equals("off")) {
+                hat = false;
+            }
+        }
+        return Tag.selfClosingInserting(ItemText.mobHead(entityKey, hat));
     }
 
     @Override

@@ -11,12 +11,13 @@ import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.ArgumentQueue;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemRarity;
 import org.bukkit.inventory.ItemStack;
 import org.jspecify.annotations.Nullable;
 
-
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 
@@ -85,6 +86,7 @@ public final class ItemText {
                 .tag("superscript_number", (args, ctx) -> amountTag(args, item, options, AmountDisplay.SUPERSCRIPT))
                 .tag("normal_number", (args, ctx) -> amountTag(args, item, options, AmountDisplay.NORMAL))
                 .tag("item_amount", (args, ctx) -> amountTag(args, item, options, options.amountDisplay()))
+                .resolver(mobHeadTagResolver())
                 .build();
 
         Component result = MINI_MESSAGE.deserialize(options.pattern(), resolver);
@@ -294,5 +296,67 @@ public final class ItemText {
      */
     public static ItemStack applyContainerLore(ItemStack item, ItemTextOptions options, boolean append) {
         return ContainerLore.apply(item, options, append);
+    }
+
+    /**
+     * Creates a player head component displaying the face/head of the specified entity type with hat enabled.
+     *
+     * @param entityType the entity type
+     * @return the mob head component, or {@link Component#empty()} if unsupported or unavailable
+     */
+    public static Component mobHead(EntityType entityType) {
+        return MobHeadRegistry.create(entityType);
+    }
+
+    /**
+     * Creates a player head component displaying the face/head of the specified entity type.
+     *
+     * @param entityType the entity type
+     * @param hat whether the outer hat/overlay layer should be rendered
+     * @return the mob head component, or {@link Component#empty()} if unsupported or unavailable
+     */
+    public static Component mobHead(EntityType entityType, boolean hat) {
+        return MobHeadRegistry.create(entityType, hat);
+    }
+
+    /**
+     * Creates a player head component displaying the face/head of the specified entity name or key with hat enabled.
+     *
+     * @param entityKey the entity type name or key (e.g. "zombie", "minecraft:cow")
+     * @return the mob head component, or {@link Component#empty()} if unsupported or unavailable
+     */
+    public static Component mobHead(String entityKey) {
+        return MobHeadRegistry.create(entityKey);
+    }
+
+    /**
+     * Creates a player head component displaying the face/head of the specified entity name or key.
+     *
+     * @param entityKey the entity type name or key (e.g. "zombie", "minecraft:cow")
+     * @param hat whether the outer hat/overlay layer should be rendered
+     * @return the mob head component, or {@link Component#empty()} if unsupported or unavailable
+     */
+    public static Component mobHead(String entityKey, boolean hat) {
+        return MobHeadRegistry.create(entityKey, hat);
+    }
+
+    /**
+     * Returns a {@link TagResolver} resolving {@code <mob_head:<entity>>} and {@code <mob_head:<entity>:<hat>>} tags.
+     */
+    public static TagResolver mobHeadTagResolver() {
+        return TagResolver.resolver("mob_head", (args, ctx) -> {
+            if (!args.hasNext()) {
+                return Tag.selfClosingInserting(Component.empty());
+            }
+            String entityKey = args.pop().value();
+            boolean hat = true;
+            if (args.hasNext()) {
+                String hatArg = args.pop().value().trim().toLowerCase(Locale.ROOT);
+                if (hatArg.equals("false") || hatArg.equals("no_hat") || hatArg.equals("nohat") || hatArg.equals("off")) {
+                    hat = false;
+                }
+            }
+            return Tag.selfClosingInserting(mobHead(entityKey, hat));
+        });
     }
 }

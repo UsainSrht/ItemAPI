@@ -1,6 +1,7 @@
 package me.usainsrht.itemapi.itemtext;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -231,7 +233,7 @@ class HeadSpriteTest {
         // Straw bed override
         ItemSpriteOverrides.SpriteRef strawBed = ItemSpriteOverrides.sprite("straw_bed");
         assertNotNull(strawBed);
-        assertEquals("minecraft:block/straw_bed_head_up", strawBed.sprite().asString());
+        assertEquals("minecraft:block/straw_bed", strawBed.sprite().asString());
     }
 
     @Test
@@ -252,7 +254,7 @@ class HeadSpriteTest {
         assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, shelfSprite);
         ItemSpriteOverrides.SpriteRef shelfRef = (ItemSpriteOverrides.SpriteRef) shelfSprite;
         assertEquals("minecraft:blocks", shelfRef.atlas().asString());
-        assertEquals("minecraft:block/shelf_mushroom_top", shelfRef.sprite().asString());
+        assertEquals("minecraft:block/shelf_mushroom_stage0", shelfRef.sprite().asString());
 
         assertFalse(BlockSpriteLookup.isKnownMaterial("fictional_wood_planks_xyz"));
 
@@ -283,6 +285,55 @@ class HeadSpriteTest {
         assertEquals("minecraft:item/poplar_boat", boatRef.sprite().asString());
     }
 
+    @Test
+    void testCushionsAndMaps263() {
+        // Cushions must resolve to items atlas
+        for (String color : new String[]{"white", "black", "red", "blue", "yellow", "cyan"}) {
+            Material mat = Material.getMaterial(color.toUpperCase(Locale.ROOT) + "_CUSHION");
+            assertNotNull(mat, "Missing cushion material: " + color);
+            SpriteTarget target = ItemSpriteFactory.resolve(stubItem(mat), ItemTextOptions.defaults());
+            assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, target);
+            ItemSpriteOverrides.SpriteRef ref = (ItemSpriteOverrides.SpriteRef) target;
+            assertEquals("minecraft:items", ref.atlas().asString());
+            assertEquals("minecraft:item/" + color + "_cushion", ref.sprite().asString());
+        }
+
+        // Structure maps must resolve to items atlas
+        String[] maps = {"desert_pyramid_map", "ocean_monument_map", "buried_treasure_map", "woodland_mansion_map"};
+        for (String mapName : maps) {
+            Material mat = Material.getMaterial(mapName.toUpperCase(Locale.ROOT));
+            assertNotNull(mat, "Missing map material: " + mapName);
+            SpriteTarget target = ItemSpriteFactory.resolve(stubItem(mat), ItemTextOptions.defaults());
+            assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, target);
+            ItemSpriteOverrides.SpriteRef ref = (ItemSpriteOverrides.SpriteRef) target;
+            assertEquals("minecraft:items", ref.atlas().asString());
+            assertEquals("minecraft:item/" + mapName, ref.sprite().asString());
+        }
+
+        // Poplar wall sign / wall hanging sign / leaves / potted sapling
+        SpriteTarget wallSignTarget = ItemSpriteFactory.resolve(stubItem(Material.POPLAR_WALL_SIGN), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, wallSignTarget);
+        assertEquals("minecraft:item/poplar_sign", ((ItemSpriteOverrides.SpriteRef) wallSignTarget).sprite().asString());
+
+        SpriteTarget wallHangingTarget = ItemSpriteFactory.resolve(stubItem(Material.POPLAR_WALL_HANGING_SIGN), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, wallHangingTarget);
+        assertEquals("minecraft:item/poplar_hanging_sign", ((ItemSpriteOverrides.SpriteRef) wallHangingTarget).sprite().asString());
+
+        SpriteTarget pottedTarget = ItemSpriteFactory.resolve(stubItem(Material.POTTED_POPLAR_SAPLING), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, pottedTarget);
+        assertEquals("minecraft:block/poplar_sapling", ((ItemSpriteOverrides.SpriteRef) pottedTarget).sprite().asString());
+
+        // Poplar leaves
+        SpriteTarget orangeLeaves = ItemSpriteFactory.resolve(stubItem(Material.ORANGE_POPLAR_LEAVES), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, orangeLeaves);
+        assertEquals("minecraft:block/orange_poplar_leaves", ((ItemSpriteOverrides.SpriteRef) orangeLeaves).sprite().asString());
+
+        // Shelves
+        SpriteTarget acaciaShelf = ItemSpriteFactory.resolve(stubItem(Material.ACACIA_SHELF), ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, acaciaShelf);
+        assertEquals("minecraft:block/acacia_shelf", ((ItemSpriteOverrides.SpriteRef) acaciaShelf).sprite().asString());
+    }
+
     private ItemStack stubItem(Material material) {
         return new ItemStack() {
             @Override
@@ -295,5 +346,82 @@ class HeadSpriteTest {
                 return 1;
             }
         };
+    }
+
+    @Test
+    void testMobHeadRegistryIntegrity() {
+        String[] sampleMobs = {
+                "zombie", "skeleton", "creeper", "spider", "ender_dragon",
+                "pig", "cow", "sheep", "chicken", "warden", "allay", "breeze", "bogged"
+        };
+        for (String mob : sampleMobs) {
+            MobHeadRegistry.MobHead head = MobHeadRegistry.find(mob);
+            assertNotNull(head, "Missing mob head for " + mob);
+            assertNotNull(head.id(), "Missing UUID for " + mob);
+            assertNotNull(head.base64Texture(), "Missing base64 for " + mob);
+
+            // Deterministic UUID
+            assertEquals(
+                    java.util.UUID.nameUUIDFromBytes(("itemapi:mob:" + mob).getBytes(StandardCharsets.UTF_8)),
+                    head.id(),
+                    "UUID for " + mob + " should be deterministic");
+
+            // Base64 format and URL
+            byte[] decoded = Base64.getDecoder().decode(head.base64Texture());
+            String json = new String(decoded, StandardCharsets.UTF_8);
+            assertTrue(
+                    json.startsWith("{\"textures\":{\"SKIN\":{\"url\":\"http://textures.minecraft.net/texture/"),
+                    "Texture JSON for " + mob + " must point to official Mojang CDN: " + json);
+        }
+
+        // Test namespace and case normalization
+        assertEquals(MobHeadRegistry.find("zombie"), MobHeadRegistry.find("minecraft:zombie"));
+        assertEquals(MobHeadRegistry.find("zombie"), MobHeadRegistry.find("ZOMBIE"));
+        assertEquals(MobHeadRegistry.find("ender_dragon"), MobHeadRegistry.find("ender-dragon"));
+        assertEquals(MobHeadRegistry.find("ender_dragon"), MobHeadRegistry.find("minecraft:ender_dragon"));
+    }
+
+    @Test
+    void testMobHeadCreationAndHatLayers() {
+        Component zombieDefault = ItemText.mobHead("zombie");
+        String zombieJson = GsonComponentSerializer.gson().serialize(zombieDefault);
+        assertTrue(zombieJson.contains("\"hat\":true"), "Default mob head must have hat: true");
+        assertTrue(zombieJson.contains(MobHeadRegistry.find("zombie").base64Texture()));
+
+        Component zombieNoHat = ItemText.mobHead("zombie", false);
+        String noHatJson = GsonComponentSerializer.gson().serialize(zombieNoHat);
+        assertTrue(noHatJson.contains("\"hat\":false"), "Explicit hat false must serialize with hat: false");
+
+        // Non-existent mob returns empty
+        assertEquals(Component.empty(), ItemText.mobHead("fictional_creature_xyz"));
+    }
+
+    @Test
+    void testMobHeadMiniMessageTagResolver() {
+        Component parsed = MiniMessage.miniMessage().deserialize("<mob_head:creeper>", ItemText.mobHeadTagResolver());
+        String json = GsonComponentSerializer.gson().serialize(parsed);
+        assertTrue(json.contains("\"hat\":true"));
+        assertTrue(json.contains(MobHeadRegistry.find("creeper").base64Texture()));
+
+        Component parsedNoHat = MiniMessage.miniMessage().deserialize("<mob_head:warden:no_hat>", ItemText.mobHeadTagResolver());
+        String noHatJson = GsonComponentSerializer.gson().serialize(parsedNoHat);
+        assertTrue(noHatJson.contains("\"hat\":false"));
+        assertTrue(noHatJson.contains(MobHeadRegistry.find("warden").base64Texture()));
+
+        Component parsedFalse = MiniMessage.miniMessage().deserialize("<mob_head:allay:false>", ItemText.mobHeadTagResolver());
+        String falseJson = GsonComponentSerializer.gson().serialize(parsedFalse);
+        assertTrue(falseJson.contains("\"hat\":false"));
+        assertTrue(falseJson.contains(MobHeadRegistry.find("allay").base64Texture()));
+    }
+
+    @Test
+    void testSpawnEggsUntouched() {
+        // Explicit constraint: do NOT touch spawn eggs! They must remain standard item sprites.
+        ItemStack zombieEgg = stubItem(Material.ZOMBIE_SPAWN_EGG);
+        SpriteTarget target = ItemSpriteFactory.resolve(zombieEgg, ItemTextOptions.defaults());
+        assertInstanceOf(ItemSpriteOverrides.SpriteRef.class, target);
+        ItemSpriteOverrides.SpriteRef spriteRef = (ItemSpriteOverrides.SpriteRef) target;
+        assertEquals("minecraft:items", spriteRef.atlas().asString());
+        assertEquals("minecraft:item/zombie_spawn_egg", spriteRef.sprite().asString());
     }
 }

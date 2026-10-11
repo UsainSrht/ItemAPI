@@ -26,7 +26,17 @@ final class ItemSpriteOverrides {
     }
 
     static @Nullable SpriteRef sprite(String itemName) {
-        return BY_ITEM.get(itemName);
+        SpriteRef ref = BY_ITEM.get(itemName);
+        if (ref != null) {
+            return ref;
+        }
+        if (itemName.endsWith("_cushion")) {
+            return new SpriteRef(ITEMS_ATLAS, Key.key("minecraft", "item/" + itemName));
+        }
+        if (itemName.endsWith("_map")) {
+            return new SpriteRef(ITEMS_ATLAS, Key.key("minecraft", "item/filled_map"));
+        }
+        return null;
     }
 
     private static Map<String, SpriteRef> build() {
@@ -83,7 +93,61 @@ final class ItemSpriteOverrides {
         for (String color : colors()) {
             putBlock(map, color + "_bed", color + "_bed_head_up");
         }
-        putBlock(map, "straw_bed", "straw_bed_head_up");
+        putBlock(map, "straw_bed", "straw_bed");
+
+        // Cushions (entity/block with item texture in 26.3)
+        for (String color : colors()) {
+            putItem(map, color + "_cushion", color + "_cushion");
+        }
+
+        // Structure / explorer maps (item sprites in 26.3)
+        String[] structureMaps = {
+                "abandoned_camp_map", "buried_ancient_city_map", "buried_mineshaft_map",
+                "buried_treasure_map", "buried_trial_chambers_map", "desert_pyramid_map",
+                "desert_village_map", "jungle_pyramid_map", "ocean_monument_map",
+                "plains_village_map", "savanna_village_map", "snowy_village_map",
+                "swamp_hut_map", "taiga_village_map", "warm_ocean_ruins_map", "woodland_mansion_map"
+        };
+        for (String mapName : structureMaps) {
+            putItem(map, mapName, mapName);
+        }
+
+        // Poplar wood set (26.3)
+        putBlock(map, "poplar_log", "poplar_log");
+        putBlock(map, "stripped_poplar_log", "stripped_poplar_log");
+        putBlock(map, "poplar_wood", "poplar_log");
+        putBlock(map, "stripped_poplar_wood", "stripped_poplar_log");
+        putBlock(map, "poplar_planks", "poplar_planks");
+        putBlock(map, "poplar_stairs", "poplar_planks");
+        putBlock(map, "poplar_slab", "poplar_planks");
+        putBlock(map, "poplar_fence", "poplar_planks");
+        putBlock(map, "poplar_fence_gate", "poplar_planks");
+        putBlock(map, "poplar_trapdoor", "poplar_trapdoor");
+        putBlock(map, "poplar_pressure_plate", "poplar_planks");
+        putBlock(map, "poplar_button", "poplar_planks");
+        putBlock(map, "poplar_shelf", "poplar_shelf");
+        putBlock(map, "poplar_sapling", "poplar_sapling");
+        putBlock(map, "orange_poplar_leaves", "orange_poplar_leaves");
+        putBlock(map, "red_poplar_leaves", "red_poplar_leaves");
+        putBlock(map, "yellow_poplar_leaves", "yellow_poplar_leaves");
+        putBlock(map, "potted_poplar_sapling", "poplar_sapling");
+
+        putItem(map, "poplar_door", "poplar_door");
+        putItem(map, "poplar_sign", "poplar_sign");
+        putItem(map, "poplar_wall_sign", "poplar_sign");
+        putItem(map, "poplar_hanging_sign", "poplar_hanging_sign");
+        putItem(map, "poplar_wall_hanging_sign", "poplar_hanging_sign");
+        putItem(map, "poplar_boat", "poplar_boat");
+        putItem(map, "poplar_chest_boat", "poplar_chest_boat");
+
+        // Shelves (26.3)
+        String[] shelfWoods = {
+                "acacia", "bamboo", "birch", "cherry", "crimson", "dark_oak",
+                "jungle", "mangrove", "oak", "pale_oak", "poplar", "spruce", "warped"
+        };
+        for (String wood : shelfWoods) {
+            putBlock(map, wood + "_shelf", wood + "_shelf");
+        }
 
         // Heads / skulls (3D) — approximate recognizable blocks
         putBlock(map, "skeleton_skull", "bone_block_side");

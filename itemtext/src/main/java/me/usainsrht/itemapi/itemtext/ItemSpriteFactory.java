@@ -216,6 +216,9 @@ final class ItemSpriteFactory {
         if (name.endsWith("_sign")) {
             return true;
         }
+        if (name.endsWith("_cushion") || name.endsWith("_map")) {
+            return true;
+        }
         if (name.endsWith("_chain")
                 || ((name.endsWith("_lantern") || "lantern".equals(name))
                         && !"jack_o_lantern".equals(name) && !"sea_lantern".equals(name))

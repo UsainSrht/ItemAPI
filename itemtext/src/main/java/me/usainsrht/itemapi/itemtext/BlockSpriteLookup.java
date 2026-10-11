@@ -47,7 +47,7 @@ final class BlockSpriteLookup {
             Map.entry("heavy_weighted_pressure_plate", "iron_block"),
             Map.entry("suspicious_sand", "suspicious_sand_0"),
             Map.entry("suspicious_gravel", "suspicious_gravel_0"),
-            Map.entry("shelf_mushroom", "shelf_mushroom_top"),
+            Map.entry("shelf_mushroom", "shelf_mushroom_stage0"),
             Map.entry("test_block", "test_block_accept")
     );
 

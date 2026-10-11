@@ -33,6 +33,7 @@ When defining a pattern in `ItemTextOptions`, the following tags are resolved:
 - `<superscript_number>`: Formats item count as superscript numbers (e.g., `²`, `⁶⁴`).
 - `<normal_number>`: Formats item count as standard digits (e.g., `2`, `64`).
 - `<item_amount>`: Formats item count according to the configured `amountDisplay()` setting.
+- `<mob_head:<entity>>`: Renders an iconic entity face using a player head component (e.g., `<mob_head:zombie>`, `<mob_head:creeper:false>`).
 
 #### Java Example
 
@@ -41,6 +42,7 @@ import me.usainsrht.itemapi.itemtext.AmountDisplay;
 import me.usainsrht.itemapi.itemtext.ItemText;
 import me.usainsrht.itemapi.itemtext.ItemTextOptions;
 import net.kyori.adventure.text.Component;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 
 // 1. Format using global default options
@@ -80,6 +82,11 @@ ItemStack itemWithLore = ItemText.applyContainerLore(containerItem); // Clone an
 ItemTextOptions fromConfig = ItemTextOptions.fromConfig(config.getConfigurationSection("itemtext"));
 ContentLoreOptions loreFromConfig = ContentLoreOptions.fromConfig(config.getConfigurationSection("container-lore"));
 ItemText.setDefaultOptions(fromConfig);
+
+// 6. Mob Head Component API
+Component zombieHead = ItemText.mobHead(EntityType.ZOMBIE); // default with hat
+Component creeperHead = ItemText.mobHead("creeper");
+Component wardenNoHat = ItemText.mobHead("warden", false); // outer hat layer disabled
 ```
 
 #### Container Lore & Bundle YAML Configuration (`config.yml`)
@@ -188,9 +195,9 @@ ItemStack dynamicItem = YamlItem.parse(section, playerTags);
 
 ### 3. `itemplaceholder`
 
-MiniPlaceholders v3 expansion provider exposing `<item_hand:...>` and `<item_offhand:...>` tags.
+MiniPlaceholders v3 expansion provider exposing `<item_hand:...>`, `<item_offhand:...>`, and `<mob_head:...>` tags.
 
-#### Supported Tag Options (Colon-Separated)
+#### Supported Tag Options for Hand Items (Colon-Separated)
 
 - `brackets` / `no_brackets`: Wrap formatted output in `[...]`
 - `custom_name` / `no_custom_name` (`translate`): Control display name fallback
@@ -203,12 +210,18 @@ MiniPlaceholders v3 expansion provider exposing `<item_hand:...>` and `<item_off
 - `sprite_color:<color>`: Sprite color tint (named color, hex `#RRGGBB`, or `none`)
 - `hover` / `no_hover`: Enable/disable item hover details
 
+#### Mob Head Placeholders
+
+- `<mob_head:<entity>>` or `<item_mob_head:<entity>>`: Renders the entity's face player head component (e.g. `<mob_head:zombie>`, `<mob_head:creeper>`).
+- `<mob_head:<entity>:<hat>>`: Control outer hat layer (`true`/`false`, `no_hat`, e.g. `<mob_head:warden:false>`).
+
 #### MiniMessage Usage Examples
 
 ```text
 You are holding: <item_hand>
 Offhand item: <item_offhand:brackets:shadow:superscript>
 Styled hand item: <item_hand:sprite_color:gold:shadow_color:#000000>
+Mob faces: <mob_head:creeper> Watch out! <mob_head:warden:no_hat>
 ```
 
 ---
