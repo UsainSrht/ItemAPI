@@ -40,6 +40,7 @@ public final class ItemTextOptions {
     private final boolean containerShowAsBundle;
     private final boolean usePlayerHeadsFor3DBlocks;
     private final boolean mobHeadHat;
+    private final boolean stripMapDecorations;
     private final ContentLoreOptions contentLore;
 
     private ItemTextOptions(Builder builder) {
@@ -59,6 +60,7 @@ public final class ItemTextOptions {
         this.containerShowAsBundle = builder.containerShowAsBundle;
         this.usePlayerHeadsFor3DBlocks = builder.usePlayerHeadsFor3DBlocks;
         this.mobHeadHat = builder.mobHeadHat;
+        this.stripMapDecorations = builder.stripMapDecorations;
         this.contentLore = builder.contentLore;
     }
 
@@ -191,6 +193,18 @@ public final class ItemTextOptions {
         return mobHeadHat;
     }
 
+    /**
+     * Whether map decorations ({@code minecraft:map_decorations}) are stripped from hover
+     * tooltips (default {@code true}).
+     * <p>
+     * Map decorations are never rendered in item tooltips, but leak structure coordinates
+     * and contain decoration types (such as {@code abandoned_camp} in 26.3) that crash clients
+     * on older versions (&lt; 26.3) when decoding chat packets.
+     */
+    public boolean stripMapDecorations() {
+        return stripMapDecorations;
+    }
+
     public Builder toBuilder() {
         return new Builder()
                 .displayBrackets(displayBrackets)
@@ -209,6 +223,7 @@ public final class ItemTextOptions {
                 .containerShowAsBundle(containerShowAsBundle)
                 .usePlayerHeadsFor3DBlocks(usePlayerHeadsFor3DBlocks)
                 .mobHeadHat(mobHeadHat)
+                .stripMapDecorations(stripMapDecorations)
                 .contentLore(contentLore);
     }
 
@@ -230,6 +245,7 @@ public final class ItemTextOptions {
         private boolean containerShowAsBundle = true;
         private boolean usePlayerHeadsFor3DBlocks = true;
         private boolean mobHeadHat = true;
+        private boolean stripMapDecorations = true;
         private ContentLoreOptions contentLore = ContentLoreOptions.defaults();
 
         public Builder displayBrackets(boolean displayBrackets) {
@@ -317,6 +333,11 @@ public final class ItemTextOptions {
 
         public Builder mobHeadHat(boolean mobHeadHat) {
             this.mobHeadHat = mobHeadHat;
+            return this;
+        }
+
+        public Builder stripMapDecorations(boolean stripMapDecorations) {
+            this.stripMapDecorations = stripMapDecorations;
             return this;
         }
 
@@ -572,6 +593,12 @@ public final class ItemTextOptions {
                 this.mobHeadHat = headHat;
             }
 
+            Boolean stripDecorations = getBoolean(section, "strip-map-decorations", "strip_map_decorations",
+                    "stripMapDecorations");
+            if (stripDecorations != null) {
+                this.stripMapDecorations = stripDecorations;
+            }
+
             return this;
         }
 
@@ -676,6 +703,12 @@ public final class ItemTextOptions {
             Boolean headHat = getMapBoolean(map, "mob-head-hat", "mob_head_hat", "mobHeadHat", "hat");
             if (headHat != null) {
                 this.mobHeadHat = headHat;
+            }
+
+            Boolean stripDecorations = getMapBoolean(map, "strip-map-decorations", "strip_map_decorations",
+                    "stripMapDecorations");
+            if (stripDecorations != null) {
+                this.stripMapDecorations = stripDecorations;
             }
 
             return this;

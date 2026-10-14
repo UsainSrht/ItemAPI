@@ -193,6 +193,62 @@ class ItemTextDisplayNameTest {
         assertEquals(uncolored, result);
     }
 
+    @Test
+    void testStripMapDecorationsOptionDefaults() {
+        ItemTextOptions defaults = ItemTextOptions.defaults();
+        assertTrue(defaults.stripMapDecorations(), "stripMapDecorations should default to true");
+    }
+
+    @Test
+    void testStripMapDecorationsOptionBuilder() {
+        ItemTextOptions options = ItemTextOptions.builder()
+                .stripMapDecorations(false)
+                .build();
+        assertFalse(options.stripMapDecorations());
+        assertTrue(options.toBuilder().stripMapDecorations(true).build().stripMapDecorations());
+    }
+
+    @Test
+    void testSanitizeHoverItemStripsMapDecorations() {
+        java.util.concurrent.atomic.AtomicBoolean hasDecorations = new java.util.concurrent.atomic.AtomicBoolean(true);
+        ItemStack item = new ItemStack() {
+            @Override
+            public Material getType() {
+                return Material.FILLED_MAP;
+            }
+
+            @Override
+            public int getAmount() {
+                return 1;
+            }
+
+            @Override
+            public boolean hasData(DataComponentType type) {
+                if (type == DataComponentTypes.MAP_DECORATIONS) {
+                    return hasDecorations.get();
+                }
+                return false;
+            }
+
+            @Override
+            public void unsetData(DataComponentType type) {
+                if (type == DataComponentTypes.MAP_DECORATIONS) {
+                    hasDecorations.set(false);
+                }
+            }
+
+            @Override
+            public ItemStack clone() {
+                return this;
+            }
+        };
+
+        assertTrue(item.hasData(DataComponentTypes.MAP_DECORATIONS));
+        ItemStack sanitized = ItemText.sanitizeHoverItem(item, item);
+        assertNotNull(sanitized);
+        assertFalse(hasDecorations.get(), "MAP_DECORATIONS should be unset during sanitization");
+    }
+
     private static ItemStack stubItem(Material material, @Nullable Component customName) {
         return new ItemStack() {
             @Override

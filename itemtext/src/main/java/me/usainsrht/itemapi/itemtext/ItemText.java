@@ -58,6 +58,13 @@ public final class ItemText {
     }
 
     /**
+     * Sets whether map decorations should be stripped from hover tooltips by default.
+     */
+    public static void setStripMapDecorations(boolean enabled) {
+        setDefaultOptions(builder -> builder.stripMapDecorations(enabled));
+    }
+
+    /**
      * Sets global default container lore options.
      */
     public static void setContentLore(ContentLoreOptions options) {
@@ -109,6 +116,7 @@ public final class ItemText {
                         ? ContainerLore.toBundle(item)
                         : item;
 
+                ItemStack hoverItem = baseHoverItem;
                 // If content lore preview is enabled and the item is a container, generate preview lore
                 if (options.contentLore() != null && options.contentLore().enabled() && ContainerLore.isContainer(item)) {
                     // Clone to avoid mutating original item
@@ -118,10 +126,14 @@ public final class ItemText {
                     if (!loreLines.isEmpty()) {
                         previewItem.lore(loreLines);
                     }
-                    result = result.hoverEvent(previewItem);
-                } else {
-                    result = result.hoverEvent(baseHoverItem);
+                    hoverItem = previewItem;
                 }
+
+                if (options.stripMapDecorations()) {
+                    hoverItem = sanitizeHoverItem(item, hoverItem);
+                }
+
+                result = result.hoverEvent(hoverItem);
             } catch (Throwable ignored) {
             }
         }
@@ -691,5 +703,33 @@ public final class ItemText {
             }
             return Tag.selfClosingInserting(mobHead(entityKey, hat));
         });
+    }
+
+    /**
+     * Sanitizes an {@link ItemStack} for hover tooltip display by stripping
+     * {@link DataComponentTypes#MAP_DECORATIONS} if present.
+     * <p>
+     * Map decorations are not displayed in item tooltips, but leak structure coordinates
+     * and contain decoration types (such as {@code minecraft:abandoned_camp} introduced in 26.3)
+     * that cause clients on older versions (&lt; 26.3) to fail decoding the chat packet and get kicked.
+     *
+     * @param original the original item
+     * @param hoverItem the item being prepared for hover
+     * @return the sanitized item (cloned if modified, or untouched)
+     */
+    static ItemStack sanitizeHoverItem(ItemStack original, ItemStack hoverItem) {
+        if (hoverItem == null) {
+            return null;
+        }
+        try {
+            if (hoverItem.hasData(DataComponentTypes.MAP_DECORATIONS)) {
+                if (hoverItem == original) {
+                    hoverItem = hoverItem.clone();
+                }
+                hoverItem.unsetData(DataComponentTypes.MAP_DECORATIONS);
+            }
+        } catch (Throwable ignored) {
+        }
+        return hoverItem;
     }
 }

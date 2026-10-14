@@ -110,6 +110,7 @@ itemtext:
   pattern: "<item_sprite><subscript_number> <item_displayname>"
   shadow: false
   hover: true
+  strip-map-decorations: true # strip map_decorations to prevent kicking older clients (< 26.3)
   container-show-as-bundle: true
   container-lore:
     enabled: true

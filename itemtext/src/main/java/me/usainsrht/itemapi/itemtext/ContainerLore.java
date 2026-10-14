@@ -164,6 +164,7 @@ public final class ContainerLore {
         // Swap CONTAINER → BUNDLE_CONTENTS.
         List<ItemStack> contents = container.contents().stream()
                 .filter(c -> c != null && !c.getType().isAir() && c.getAmount() > 0)
+                .map(ContainerLore::stripMapDecorations)
                 .toList();
         bundle.unsetData(DataComponentTypes.CONTAINER);
         try {
@@ -351,5 +352,23 @@ public final class ContainerLore {
             return false;
         }
         return container.contents().stream().anyMatch(s -> s != null && !s.getType().isAir() && s.getAmount() > 0);
+    }
+
+    /**
+     * Strips {@link DataComponentTypes#MAP_DECORATIONS} from an item if present.
+     */
+    public static ItemStack stripMapDecorations(ItemStack stack) {
+        if (stack == null) {
+            return null;
+        }
+        try {
+            if (stack.hasData(DataComponentTypes.MAP_DECORATIONS)) {
+                ItemStack clone = stack.clone();
+                clone.unsetData(DataComponentTypes.MAP_DECORATIONS);
+                return clone;
+            }
+        } catch (Throwable ignored) {
+        }
+        return stack;
     }
 }
