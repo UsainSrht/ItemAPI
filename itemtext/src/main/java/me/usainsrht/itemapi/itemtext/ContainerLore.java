@@ -3,6 +3,7 @@ package me.usainsrht.itemapi.itemtext;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.BundleContents;
 import io.papermc.paper.datacomponent.item.ItemContainerContents;
+import io.papermc.paper.datacomponent.item.MapDecorations;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
@@ -364,7 +365,7 @@ public final class ContainerLore {
         try {
             if (stack.hasData(DataComponentTypes.MAP_DECORATIONS)) {
                 ItemStack clone = stack.clone();
-                clone.unsetData(DataComponentTypes.MAP_DECORATIONS);
+                clone.setData(DataComponentTypes.MAP_DECORATIONS, MapDecorations.mapDecorations(Map.of()));
                 return clone;
             }
         } catch (Throwable ignored) {

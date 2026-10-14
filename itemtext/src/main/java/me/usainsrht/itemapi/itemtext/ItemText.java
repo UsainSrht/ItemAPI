@@ -1,6 +1,7 @@
 package me.usainsrht.itemapi.itemtext;
 
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.MapDecorations;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -22,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
@@ -726,7 +728,7 @@ public final class ItemText {
                 if (hoverItem == original) {
                     hoverItem = hoverItem.clone();
                 }
-                hoverItem.unsetData(DataComponentTypes.MAP_DECORATIONS);
+                hoverItem.setData(DataComponentTypes.MAP_DECORATIONS, MapDecorations.mapDecorations(Map.of()));
             }
         } catch (Throwable ignored) {
         }

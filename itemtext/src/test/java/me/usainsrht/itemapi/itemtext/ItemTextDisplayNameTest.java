@@ -2,6 +2,7 @@ package me.usainsrht.itemapi.itemtext;
 
 import io.papermc.paper.datacomponent.DataComponentType;
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.MapDecorations;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -11,6 +12,8 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -210,7 +213,7 @@ class ItemTextDisplayNameTest {
 
     @Test
     void testSanitizeHoverItemStripsMapDecorations() {
-        java.util.concurrent.atomic.AtomicBoolean hasDecorations = new java.util.concurrent.atomic.AtomicBoolean(true);
+        java.util.concurrent.atomic.AtomicReference<MapDecorations> setDecorations = new java.util.concurrent.atomic.AtomicReference<>();
         ItemStack item = new ItemStack() {
             @Override
             public Material getType() {
@@ -225,15 +228,16 @@ class ItemTextDisplayNameTest {
             @Override
             public boolean hasData(DataComponentType type) {
                 if (type == DataComponentTypes.MAP_DECORATIONS) {
-                    return hasDecorations.get();
+                    return true;
                 }
                 return false;
             }
 
             @Override
-            public void unsetData(DataComponentType type) {
+            @SuppressWarnings("unchecked")
+            public <T> void setData(DataComponentType.Valued<T> type, T value) {
                 if (type == DataComponentTypes.MAP_DECORATIONS) {
-                    hasDecorations.set(false);
+                    setDecorations.set((MapDecorations) value);
                 }
             }
 
@@ -246,7 +250,51 @@ class ItemTextDisplayNameTest {
         assertTrue(item.hasData(DataComponentTypes.MAP_DECORATIONS));
         ItemStack sanitized = ItemText.sanitizeHoverItem(item, item);
         assertNotNull(sanitized);
-        assertFalse(hasDecorations.get(), "MAP_DECORATIONS should be unset during sanitization");
+        assertNotNull(setDecorations.get(), "MAP_DECORATIONS should be set with empty decorations during sanitization");
+        assertTrue(setDecorations.get().decorations().isEmpty());
+    }
+
+    @Test
+    void testContainerLoreStripMapDecorations() {
+        java.util.concurrent.atomic.AtomicReference<MapDecorations> setDecorations = new java.util.concurrent.atomic.AtomicReference<>();
+        ItemStack item = new ItemStack() {
+            @Override
+            public Material getType() {
+                return Material.FILLED_MAP;
+            }
+
+            @Override
+            public int getAmount() {
+                return 1;
+            }
+
+            @Override
+            public boolean hasData(DataComponentType type) {
+                if (type == DataComponentTypes.MAP_DECORATIONS) {
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> void setData(DataComponentType.Valued<T> type, T value) {
+                if (type == DataComponentTypes.MAP_DECORATIONS) {
+                    setDecorations.set((MapDecorations) value);
+                }
+            }
+
+            @Override
+            public ItemStack clone() {
+                return this;
+            }
+        };
+
+        assertTrue(item.hasData(DataComponentTypes.MAP_DECORATIONS));
+        ItemStack stripped = ContainerLore.stripMapDecorations(item);
+        assertNotNull(stripped);
+        assertNotNull(setDecorations.get(), "MAP_DECORATIONS should be set with empty decorations");
+        assertTrue(setDecorations.get().decorations().isEmpty());
     }
 
     private static ItemStack stubItem(Material material, @Nullable Component customName) {
